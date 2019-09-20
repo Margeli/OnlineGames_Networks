@@ -23,7 +23,7 @@ bool ModuleTaskManager::init()
 	// TODO 1: Create threads (they have to execute threadMain())
 
 	for (int i = 0; i < MAX_THREADS; ++i) {
-		threads[i] = std::thread(threadMain);
+		threads[i] = std::thread(&ModuleTaskManager::threadMain, this);
 	}
 
 
