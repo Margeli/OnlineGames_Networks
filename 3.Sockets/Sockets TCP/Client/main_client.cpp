@@ -33,21 +33,27 @@ void client(const char *serverAddrStr, int port)
 	WSADATA wsaData;
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != NO_ERROR) {//error case	
-		return;
+		printWSErrorAndExit("Client error initializing Winsock Lib");
 	}
 
 	// TODO-2: Create socket (IPv4, stream, TCP)
 	
-	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, TCP socket
-
+	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, UDP socket
+	if (socky == INVALID_SOCKET) {
+		printWSErrorAndExit("Client error creating socket, INVALID_SOCKET");
+	}
 	// TODO-3: Create an address object with the server address
 
-	sockaddr_in bindAddress;
-	bindAddress.sin_family = AF_INET; //IPv4
-	bindAddress.sin_port = htons(SERVER_PORT);	
-	inet_pton(AF_INET, SERVER_ADDRESS, &bindAddress.sin_addr);
+	sockaddr_in addressBound;
+	addressBound.sin_family = AF_INET; //IPv4
+	addressBound.sin_port = htons(port);
+	inet_pton(AF_INET, serverAddrStr, &addressBound.sin_addr);
 
 	// TODO-4: Connect to server
+	iResult = connect(socky, (sockaddr*)&addressBound, sizeof(addressBound));
+	if (iResult != NO_ERROR) {//error case	
+		printWSErrorAndExit("Client error connecting to server");
+	}
 
 	for (int i = 0; i < 5; ++i)
 	{
@@ -56,11 +62,38 @@ void client(const char *serverAddrStr, int port)
 		// - Receive 'pong' packet from the server
 		// - Control errors in both cases
 		// - Control graceful disconnection from the server (recv receiving 0 bytes)
+		std::string ping = std::string("ping");
+		iResult = send(socky, ping.c_str(), ping.length, 0);
+		if (iResult == SOCKET_ERROR) {
+			printWSErrorAndExit("Client error sending message");
+		}
+
+		char recv_msg[16];
+		iResult = recv(socky, recv_msg, 16, 0);
+		if (iResult == SOCKET_ERROR) {
+			printWSErrorAndExit("Client error receiving message");
+			delete[] recv_msg;
+		}
+		if (sizeof(recv_msg) == 0) {
+			printWSErrorAndExit("Client error lost connection to server");
+			delete[] recv_msg;
+		}
+		std::cout << recv_msg << std::endl;
+		delete[] recv_msg; 
+		Sleep(500);
 	}
 
 	// TODO-6: Close socket
+	iResult = closesocket(socky);
+	if (iResult != NO_ERROR) {//error case	
+		printWSErrorAndExit("Client error closing socket");
+	}
 
 	// TODO-7: Winsock shutdown
+	iResult = WSACleanup();
+	if (iResult != NO_ERROR) {//error case	
+		printWSErrorAndExit("Client error shutting down Winsock Lib");
+	}
 }
 
 int main(int argc, char **argv)
