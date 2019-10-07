@@ -30,10 +30,22 @@ void printWSErrorAndExit(const char *msg)
 void client(const char *serverAddrStr, int port)
 {
 	// TODO-1: Winsock init
+	WSADATA wsaData;
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != NO_ERROR) {//error case	
+		return;
+	}
 
 	// TODO-2: Create socket (IPv4, datagrams, UDP)
+	SOCKET socky = socket(AF_INET, SOCK_DGRAM, 0); // IPv4, UDP socket
 
 	// TODO-3: Create an address object with the server address
+
+	sockaddr_in bindAddress;
+	bindAddress.sin_family = AF_INET; //IPv4
+	bindAddress.sin_port = htons(SERVER_PORT);
+	inet_pton(AF_INET, SERVER_ADDRESS, &bindAddress.sin_addr);
+
 
 	while (true)
 	{
