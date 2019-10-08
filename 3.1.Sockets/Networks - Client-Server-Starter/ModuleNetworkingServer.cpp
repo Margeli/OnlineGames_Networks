@@ -33,13 +33,12 @@ bool ModuleNetworkingServer::start(int port)
 	}
 
 	// - Enter in listen mode
-	iResult = listen(listenSocket, 3); ///EXLUSIVE OF TCP SOCKETS (listen, accept, connect)
+	iResult = listen(listenSocket, MAX_SOCKETS); ///EXLUSIVE OF TCP SOCKETS (listen, accept, connect)
 	if (iResult != NO_ERROR) {//error case	
 		reportError("Server error: Error listening socket");
 	}
 
 	// - Add the listenSocket to the managed list of sockets using addSocket()
-
 	addSocket(listenSocket);
 
 	state = ServerState::Listening;

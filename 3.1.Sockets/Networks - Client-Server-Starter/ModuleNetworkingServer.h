@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ModuleNetworking.h"
+#define MAX_SOCKETS 16
 
 class ModuleNetworkingServer : public ModuleNetworking
 {
