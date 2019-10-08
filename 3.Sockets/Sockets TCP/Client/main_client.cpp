@@ -31,14 +31,14 @@ void client(const char *serverAddrStr, int port)
 {
 	// TODO-1: Winsock init
 	WSADATA wsaData;
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);//init WinSock Lib
 	if (iResult != NO_ERROR) {//error case	
 		printWSErrorAndExit("Client error initializing Winsock Lib");
 	}
 
 	// TODO-2: Create socket (IPv4, stream, TCP)
 	
-	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, UDP socket
+	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, TCP socket
 	if (socky == INVALID_SOCKET) {
 		printWSErrorAndExit("Client error creating socket, INVALID_SOCKET");
 	}
@@ -50,7 +50,7 @@ void client(const char *serverAddrStr, int port)
 	inet_pton(AF_INET, serverAddrStr, &addressBound.sin_addr);
 
 	// TODO-4: Connect to server
-	iResult = connect(socky, (sockaddr*)&addressBound, sizeof(addressBound));
+	iResult = connect(socky, (sockaddr*)&addressBound, sizeof(addressBound)); ///EXLUSIVE OF TCP SOCKETS (listen, accept, connect)
 	if (iResult != NO_ERROR) {//error case	
 		printWSErrorAndExit("Client error connecting to server");
 	}
@@ -63,7 +63,7 @@ void client(const char *serverAddrStr, int port)
 		// - Control errors in both cases
 		// - Control graceful disconnection from the server (recv receiving 0 bytes)
 		std::string ping = std::string("ping");
-		iResult = send(socky, ping.c_str(), ping.length, 0);
+		iResult = send(socky, ping.c_str(), ping.length()+1, 0);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Client error sending message");
 		}
@@ -72,14 +72,11 @@ void client(const char *serverAddrStr, int port)
 		iResult = recv(socky, recv_msg, 16, 0);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Client error receiving message");
-			delete[] recv_msg;
 		}
 		if (sizeof(recv_msg) == 0) {
 			printWSErrorAndExit("Client error lost connection to server");
-			delete[] recv_msg;
 		}
 		std::cout << recv_msg << std::endl;
-		delete[] recv_msg; 
 		Sleep(500);
 	}
 

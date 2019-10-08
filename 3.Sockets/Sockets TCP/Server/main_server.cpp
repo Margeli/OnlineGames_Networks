@@ -29,14 +29,14 @@ void server(int port)
 {
 	// TODO-1: Winsock init
 	WSADATA wsaData;
-	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); //init WinSock Lib
 	if (iResult != NO_ERROR) {//error case	
 		printWSErrorAndExit("Server error initializing Winsock Lib");
 	}
 
 	// TODO-2: Create socket (IPv4, stream, TCP)
 
-	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, UDP socket
+	SOCKET socky = socket(AF_INET, SOCK_STREAM, 0); // IPv4, TCP socket
 	if (socky == INVALID_SOCKET) {
 		printWSErrorAndExit("Server error creating socket, INVALID_SOCKET");
 	}
@@ -59,13 +59,13 @@ void server(int port)
 
 	// TODO-5: Bind socket to the local address
 
-	iResult = bind(socky, (const sockaddr*)&addressBound, sizeof(addressBound));
+	iResult = bind(socky, (const sockaddr*)&addressBound, sizeof(addressBound));//bind socket with address
 	if (iResult != NO_ERROR) {//error case	
 		printWSErrorAndExit("Server error binding socket's address");
 	}
 
 	// TODO-6: Make the socket enter into listen mode
-	iResult = listen(socky, 3);
+	iResult = listen(socky, 3); ///EXLUSIVE OF TCP SOCKETS (listen, accept, connect)
 	if (iResult != NO_ERROR) {//error case	
 		printWSErrorAndExit("Server error listening socket");
 	}
@@ -74,8 +74,8 @@ void server(int port)
 	// Note that once a new connection is accepted, we will have
 	// a new socket directly connected to the remote host.
 	int size = sizeof(addressBound);
-	SOCKET acceptedSocky = accept(socky, (sockaddr*)&addressBound, &size);
-	if (acceptedSocky = INVALID_SOCKET) {
+	SOCKET acceptedSocky = accept(socky, (sockaddr*)&addressBound, &size); ///EXLUSIVE OF TCP SOCKETS (listen, accept, connect)
+	if (acceptedSocky == INVALID_SOCKET) {
 		printWSErrorAndExit("Server error accepting socket");
 	}
 	int counter = 0;
@@ -90,16 +90,17 @@ void server(int port)
 		iResult = recv(acceptedSocky, recv_msg, 16, 0);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Client error receiving message");
-			delete[] recv_msg;
+			
 		}
+		std::cout << recv_msg << std::endl;
+		
 
 		std::string pong = std::string("pong");
-		iResult = send(acceptedSocky, pong.c_str(), pong.length(), 0);
+		iResult = send(acceptedSocky, pong.c_str(), pong.length()+1, 0);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Server error sending message");
 		}
-		std::cout << recv_msg << std::endl;
-		delete[] recv_msg;
+		
 		counter++;
 	}
 
