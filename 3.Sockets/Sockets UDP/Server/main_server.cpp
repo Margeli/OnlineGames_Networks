@@ -65,17 +65,16 @@ void server(int port)
 		// - Control errors in both cases
 	
 
-		char* recv_msg[16];
+		char recv_msg[16];
 		int bindAddrLen = sizeof(addressBound);
-		iResult = recvfrom(socky, *recv_msg, 16, 0, (sockaddr*)&addressBound, &bindAddrLen);
+		iResult = recvfrom(socky, recv_msg, 16, 0, (sockaddr*)&addressBound, &bindAddrLen);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Server error receiving message");
 		}
 		std::cout << recv_msg << std::endl;
-		delete[] recv_msg;
 
 		std::string pong = std::string("pong");
-		iResult = sendto(socky, pong.c_str(), pong.length(), 0, (const sockaddr*)&addressBound, sizeof(addressBound));
+		iResult = sendto(socky, pong.c_str(), pong.length()+1, 0, (const sockaddr*)&addressBound, sizeof(addressBound));
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Server error sending message");
 		}

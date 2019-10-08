@@ -59,7 +59,7 @@ void client(const char *serverAddrStr, int port)
 		std::string ping = std::string("ping");
 			
 
-		iResult = sendto(socky, ping.c_str(), ping.length(), 0, (const sockaddr*)&addressBound, sizeof(addressBound));
+		iResult = sendto(socky, ping.c_str(), ping.length()+1, 0, (const sockaddr*)&addressBound, sizeof(addressBound));
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Client error sending message");
 		}
@@ -69,11 +69,9 @@ void client(const char *serverAddrStr, int port)
 		iResult = recvfrom(socky, recv_msg, 16, 0, (sockaddr*)&addressBound, &bindAddrLen);
 		if (iResult == SOCKET_ERROR) {
 			printWSErrorAndExit("Client error receiving message");
-			delete[] recv_msg;
 		}
 
 		std::cout << recv_msg << std::endl;
-		delete[] recv_msg;
 		Sleep(500);
 		count++;
 	}
