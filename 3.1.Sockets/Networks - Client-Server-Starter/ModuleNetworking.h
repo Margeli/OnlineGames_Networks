@@ -34,6 +34,7 @@ private:
 protected:
 
 	std::vector<SOCKET> sockets;
+	std::vector<SOCKET> disconnectedSockets;
 
 	void addSocket(SOCKET socket);
 

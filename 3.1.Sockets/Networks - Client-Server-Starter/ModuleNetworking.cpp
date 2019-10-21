@@ -62,6 +62,19 @@ bool ModuleNetworking::preUpdate()
 	byte incomingDataBuffer[incomingDataBufferSize];
 
 	// TODO(jesus): select those sockets that have a read operation available
+	fd_set	readSet;
+	FD_ZERO(&readSet);
+	for (auto i : sockets) {
+		FD_SET(i, &readSet);
+	}
+
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	int iResult = select(0, sockets.data, &readSet, nullptr, &timeout);
+	if (iResult == SOCKET_ERROR) {
+		reportError("error selecting sockets for reading");
+	}
 
 	// TODO(jesus): for those sockets selected, check wheter or not they are
 	// a listen socket or a standard socket and perform the corresponding
@@ -73,6 +86,46 @@ bool ModuleNetworking::preUpdate()
 	// On recv() success, communicate the incoming data received to the
 	// subclass (use the callback onSocketReceivedData()).
 
+
+	for (auto it : sockets) {
+		if (FD_ISSET(it, &readSet)){
+			if (isListenSocket(it)) { // if it is server socket
+
+				SOCKET newSocket = INVALID_SOCKET;
+				sockaddr_in adrsBound;
+				int size = 0;
+
+				newSocket = accept(it, (sockaddr*)&adrsBound, &size);
+				if (newSocket == INVALID_SOCKET) {
+					reportError("error accepting socket ");
+				}
+				onSocketConnected(newSocket, adrsBound);
+				addSocket(newSocket);
+			}
+			else { // if standard socket
+				iResult = recv(it,(char*)&incomingDataBuffer, incomingDataBufferSize, 0);
+				if (iResult == SOCKET_ERROR || iResult == ECONNRESET) {
+					reportError("Error receiving socket");
+					disconnectedSockets.push_back(it);
+				}
+
+				incomingDataBuffer[iResult] = '\0';
+				onSocketReceivedData(it, incomingDataBuffer);
+			}
+		}
+	}
+	for (auto it : disconnectedSockets) {
+		onSocketDisconnected(it);
+		int i = 0;
+		for (auto it2 : sockets) {
+			++i;
+			if (it == it2) {
+
+				sockets.erase(sockets.begin() + i);
+			}
+		}
+	}
+	disconnectedSockets.clear();
 	// TODO(jesus): handle disconnections. Remember that a socket has been
 	// disconnected from its remote end either when recv() returned 0,
 	// or when it generated some errors such as ECONNRESET.
