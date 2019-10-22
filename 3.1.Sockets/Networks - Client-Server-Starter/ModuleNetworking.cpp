@@ -71,7 +71,7 @@ bool ModuleNetworking::preUpdate()
 	struct timeval timeout;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-	int iResult = select(0, sockets.data, &readSet, nullptr, &timeout);
+	int iResult = select(0,  &readSet,nullptr, nullptr, &timeout);
 	if (iResult == SOCKET_ERROR) {
 		reportError("error selecting sockets for reading");
 	}
@@ -89,7 +89,7 @@ bool ModuleNetworking::preUpdate()
 
 	for (auto it : sockets) {
 		if (FD_ISSET(it, &readSet)){
-			if (isListenSocket(it)) { // if it is server socket
+			if (App->modNetServer->isListenSocket(it)) { // if it is server socket
 
 				SOCKET newSocket = INVALID_SOCKET;
 				sockaddr_in adrsBound;
@@ -109,7 +109,7 @@ bool ModuleNetworking::preUpdate()
 					disconnectedSockets.push_back(it);
 				}
 
-				incomingDataBuffer[iResult] = '\0';
+				//incomingDataBuffer[iResult] = '\0';
 				onSocketReceivedData(it, incomingDataBuffer);
 			}
 		}
@@ -122,6 +122,7 @@ bool ModuleNetworking::preUpdate()
 			if (it == it2) {
 
 				sockets.erase(sockets.begin() + i);
+				break;
 			}
 		}
 	}

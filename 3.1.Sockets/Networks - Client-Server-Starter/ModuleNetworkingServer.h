@@ -33,6 +33,7 @@ private:
 	// ModuleNetworking virtual methods
 	//////////////////////////////////////////////////////////////////////
 
+public:
 	bool isListenSocket(SOCKET socket) const override;
 
 	void onSocketConnected(SOCKET socket, const sockaddr_in &socketAddress) override;
