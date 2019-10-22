@@ -75,6 +75,7 @@ bool ModuleNetworkingClient::gui()
 void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, byte * data)
 {
 	state = ClientState::Stopped;
+
 }
 
 void ModuleNetworkingClient::onSocketDisconnected(SOCKET socket)

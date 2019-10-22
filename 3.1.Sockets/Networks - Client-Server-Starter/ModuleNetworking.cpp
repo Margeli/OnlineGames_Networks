@@ -70,7 +70,8 @@ bool ModuleNetworking::preUpdate()
 
 	struct timeval timeout;
 	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
+	timeout.tv_usec = 0;
+
 	int iResult = select(0,  &readSet,nullptr, nullptr, &timeout);
 	if (iResult == SOCKET_ERROR) {
 		reportError("error selecting sockets for reading");
@@ -93,7 +94,7 @@ bool ModuleNetworking::preUpdate()
 
 				SOCKET newSocket = INVALID_SOCKET;
 				sockaddr_in adrsBound;
-				int size = 0;
+				int size = sizeof(adrsBound);
 
 				newSocket = accept(it, (sockaddr*)&adrsBound, &size);
 				if (newSocket == INVALID_SOCKET) {
@@ -108,9 +109,10 @@ bool ModuleNetworking::preUpdate()
 					reportError("Error receiving socket");
 					disconnectedSockets.push_back(it);
 				}
-
-				//incomingDataBuffer[iResult] = '\0';
-				onSocketReceivedData(it, incomingDataBuffer);
+				else {
+					incomingDataBuffer[iResult] = '\0';
+					onSocketReceivedData(it, incomingDataBuffer);
+				}
 			}
 		}
 	}
@@ -118,12 +120,14 @@ bool ModuleNetworking::preUpdate()
 		onSocketDisconnected(it);
 		int i = 0;
 		for (auto it2 : sockets) {
-			++i;
+			
 			if (it == it2) {
 
 				sockets.erase(sockets.begin() + i);
+				
 				break;
 			}
+			++i;
 		}
 	}
 	disconnectedSockets.clear();
