@@ -14,8 +14,7 @@ private:
 	bool preUpdate() override;
 
 	bool cleanUp() override;
-
-	bool sendPacket(const OutputMemoryStream &packet, SOCKET socket);
+;
 
 	//////////////////////////////////////////////////////////////////////
 	// Socket event callbacks
@@ -29,8 +28,8 @@ private:
 
 	virtual void onSocketDisconnected(SOCKET s) = 0;
 
-	
 
+	
 
 protected:
 
@@ -41,6 +40,7 @@ protected:
 
 	void disconnect();
 
+	bool sendPacket(const OutputMemoryStream &packet, SOCKET socket);
 	static void reportError(const char *message);
 };
 

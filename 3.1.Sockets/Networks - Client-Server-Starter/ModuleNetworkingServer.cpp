@@ -73,6 +73,12 @@ bool ModuleNetworkingServer::gui()
 		ImVec2 texSize(400.0f, 400.0f * tex->height / tex->width);
 		ImGui::Image(tex->shaderResource, texSize);
 
+		if (ImGui::Button("Close Server"))
+		{
+			disconnect();
+			state = ServerState::Stopped;
+		}
+
 		ImGui::Text("List of connected sockets:");
 
 		for (auto &connectedSocket : connectedSockets)
@@ -116,12 +122,19 @@ void ModuleNetworkingServer::onSocketConnected(SOCKET socket, const sockaddr_in 
 
 void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemoryStream &packet)
 {
-	// Set the player name of the corresponding connected socket proxy
-	for (auto &connectedSocket : connectedSockets)
-	{
-		if (connectedSocket.socket == socket)
+	ClientMessage clientMessage;
+	packet >> clientMessage;
+	if (clientMessage == ClientMessage::Hello) {
+
+		std::string playerName;
+		packet >> playerName;
+		// Set the player name of the corresponding connected socket proxy
+		for (auto &connectedSocket : connectedSockets)
 		{
-			connectedSocket.playerName = (const char *)packet.;
+			if (connectedSocket.socket == socket)
+			{
+				connectedSocket.playerName = playerName;
+			}
 		}
 	}
 }

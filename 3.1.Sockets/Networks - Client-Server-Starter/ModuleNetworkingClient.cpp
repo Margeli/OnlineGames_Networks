@@ -41,13 +41,17 @@ bool ModuleNetworkingClient::update()
 {
 	if (state == ClientState::Start)
 	{
-		// TODO(jesus): Send the player name to the server
-		
-		int iResult = send(_socket, playerName.c_str(), playerName.length() + 1, 0);
-		if (iResult == SOCKET_ERROR) {
-			reportError("Client error sending message");
+		OutputMemoryStream packet;
+		packet << ClientMessage::Hello;
+		packet << playerName;
+		if (sendPacket(packet, _socket)) {
+
+			state = ClientState::Logging;
 		}
-		state = ClientState::Logging;
+		else {
+			disconnect();
+			state = ClientState::Stopped;
+		}
 	}
 
 	return true;
@@ -63,6 +67,10 @@ bool ModuleNetworkingClient::gui()
 		Texture *tex = App->modResources->client;
 		ImVec2 texSize(400.0f, 400.0f * tex->height / tex->width);
 		ImGui::Image(tex->shaderResource, texSize);
+
+		if (ImGui::Button("Disconnect Client")) {
+			onSocketDisconnected(_socket);
+		}
 
 		ImGui::Text("%s connected to the server...", playerName.c_str());
 
@@ -81,5 +89,7 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 void ModuleNetworkingClient::onSocketDisconnected(SOCKET socket)
 {
 	state = ClientState::Stopped;
+	shutdown(socket, 2);	
+	
 }
 
