@@ -105,8 +105,10 @@ bool ModuleNetworking::preUpdate()
 			else { // if standard socket
 				InputMemoryStream packet;
 				int bytesRead = recv(it,packet.GetBufferPtr(), packet.GetCapacity(), 0);
-				if (iResult == SOCKET_ERROR || iResult == ECONNRESET) {
-					reportError("Error receiving socket");
+				if (bytesRead == 0 || bytesRead == SOCKET_ERROR || bytesRead == ECONNRESET) {
+					if (bytesRead != 0) {
+						reportError("Error receiving socket");
+					}
 					disconnectedSockets.push_back(it);
 				}
 				else {

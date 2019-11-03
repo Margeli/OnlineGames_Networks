@@ -10,6 +10,9 @@ enum class ClientMessage
 
 enum class ServerMessage
 {
-	Welcome
+	Welcome,
+	UserNameExists, 
+	UserJoin,
+	UserLeft
 };
 

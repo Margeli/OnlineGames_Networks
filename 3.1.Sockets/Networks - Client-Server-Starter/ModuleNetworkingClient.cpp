@@ -82,8 +82,40 @@ bool ModuleNetworkingClient::gui()
 
 void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemoryStream &packet)
 {
-	state = ClientState::Stopped;
-
+	//state = ClientState::Stopped;
+	ServerMessage serverMessage;
+	packet >> serverMessage;
+	switch (serverMessage) {
+		case ServerMessage::Welcome: {
+			std::string msg = std::string();
+			packet >> msg;
+			bool colorRed = true;
+			packet >> colorRed;
+			LOG(msg.c_str());
+			break; 
+		}
+		case ServerMessage::UserNameExists: {
+			std::string msg = std::string();
+			packet >> msg;
+			ELOG(msg.c_str());
+			onSocketDisconnected(_socket);
+			state = ClientState::Stopped;
+			break;
+		}
+		case ServerMessage::UserLeft: {
+			std::string msg = std::string();
+			packet >> msg;
+			LOG(msg.c_str());
+			break;
+		}
+		case ServerMessage::UserJoin: {
+			std::string msg = std::string();
+			packet >> msg;
+			LOG(msg.c_str());
+			break;
+		}
+	}
+	
 }
 
 void ModuleNetworkingClient::onSocketDisconnected(SOCKET socket)

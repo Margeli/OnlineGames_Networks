@@ -118,6 +118,7 @@ void ModuleNetworkingServer::onSocketConnected(SOCKET socket, const sockaddr_in 
 	connectedSocket.socket = socket;
 	connectedSocket.address = socketAddress;
 	connectedSockets.push_back(connectedSocket);
+
 }
 
 void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemoryStream &packet)
@@ -133,9 +134,54 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 		{
 			if (connectedSocket.socket == socket)
 			{
-				connectedSocket.playerName = playerName;
+				connectedSocket.playerName = playerName; 
+				bool nameMatch = false;
+				for (auto &itSocket : connectedSockets) {
+					if (itSocket.socket != socket) {
+						if (itSocket.playerName == playerName) {
+							nameMatch = true;
+						}
+					}
+				}
+				
+				if (nameMatch) {
+					OutputMemoryStream warningNamePacket;//---------------USERNAME EXISTS MESSAGE
+					warningNamePacket << ServerMessage::UserNameExists;
+					std::string msg = std::string("Error Logging in: Name already in usage!");
+					warningNamePacket << msg;
+					if (!sendPacket(warningNamePacket, connectedSocket.socket))
+					{
+						reportError("sending warning name duplication message");
+					}	//-----------------				
+				}
+				else {//if name already exists.
+					OutputMemoryStream welcomePacket; //---------------WELCOME MESSAGE
+					welcomePacket << ServerMessage::Welcome;
+					std::string msg = std::string("This is a welcome text! You have succesfully logged in into the chat! ");
+					welcomePacket << msg;
+					bool colorRed = false;
+					welcomePacket << colorRed;
+					if (!sendPacket(welcomePacket, connectedSocket.socket))
+					{
+						reportError("sending welcome message");
+					}
+					//-----------------
+					OutputMemoryStream userJoinPacket; //---------------USER JOIN MESSAGE
+					userJoinPacket << ServerMessage::UserJoin;
+					std::string msg2 = std::string(connectedSocket.playerName + " joined the chat.");
+					userJoinPacket << msg2;
+					for (auto &connectedSocket2 : connectedSockets) {
+						if (connectedSocket2.socket != connectedSocket.socket) {
+							if (!sendPacket(userJoinPacket, connectedSocket2.socket))
+							{
+								reportError("sending left chat message");
+							}
+						}
+					}
+					//------------------
+				}
 			}
-		}
+		}		
 	}
 }
 
@@ -146,9 +192,19 @@ void ModuleNetworkingServer::onSocketDisconnected(SOCKET socket)
 	{
 		auto &connectedSocket = *it;
 		if (connectedSocket.socket == socket)
-		{
+		{			
+			OutputMemoryStream userLeftPacket; //-----------------USER LEFT MESSAGE
+			userLeftPacket << ServerMessage::UserLeft;
+			std::string msg = std::string((*it).playerName + " left the chat.");
+			userLeftPacket << msg;
 			connectedSockets.erase(it);
-			break;
+			for (auto &connectedSocket2 : connectedSockets) {
+				if (!sendPacket(userLeftPacket, connectedSocket2.socket))
+				{
+					reportError("sending left chat message");
+				}
+			}
+			break;//-----------------
 		}
 	}
 }
