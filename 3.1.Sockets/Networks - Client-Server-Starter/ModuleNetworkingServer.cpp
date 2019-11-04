@@ -158,7 +158,9 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 					OutputMemoryStream welcomePacket; //---------------WELCOME MESSAGE
 					welcomePacket << ServerMessage::Welcome;
 					std::string msg = std::string("******WELCOME TO THE CHAT******");
-					welcomePacket << msg;
+					welcomePacket << msg; 
+					int color = 3;//yellow color
+					welcomePacket << color;
 					bool colorRed = false;
 					welcomePacket << colorRed;
 					if (!sendPacket(welcomePacket, connectedSocket.socket))
@@ -169,7 +171,9 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 					OutputMemoryStream userJoinPacket; //---------------USER JOIN MESSAGE
 					userJoinPacket << ServerMessage::UserJoin;
 					std::string msg2 = std::string(connectedSocket.playerName + " joined the chat.");
-					userJoinPacket << msg2;
+					userJoinPacket << msg2; 
+					int color2 = 2;//blue color
+					userJoinPacket << color2;
 					for (auto &connectedSocket2 : connectedSockets) {
 						if (connectedSocket2.socket != connectedSocket.socket) {
 							if (!sendPacket(userJoinPacket, connectedSocket2.socket))
@@ -195,6 +199,8 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 		
 		chatTxtPacket << sender;
 		chatTxtPacket << txt;
+		int  color =0;//white color
+		chatTxtPacket << color;
 
 
 		for (auto &connectedSocket : connectedSockets) {
@@ -221,6 +227,8 @@ void ModuleNetworkingServer::onSocketDisconnected(SOCKET socket)
 			std::string msg = std::string((*it).playerName + " left the chat.");
 			userLeftPacket << msg;
 			connectedSockets.erase(it);
+			int color2 = 2;//blue color
+			userLeftPacket << color2;
 			for (auto &connectedSocket2 : connectedSockets) {
 				if (!sendPacket(userLeftPacket, connectedSocket2.socket))
 				{

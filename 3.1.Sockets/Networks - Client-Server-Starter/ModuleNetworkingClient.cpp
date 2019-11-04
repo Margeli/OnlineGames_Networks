@@ -77,7 +77,22 @@ bool ModuleNetworkingClient::gui()
 		ImGui::Separator();
 		ImGui::BeginChild("------------------CHAT------------------");
 		for (auto &it : chat) {
-			ImGui::Text(it.c_str());
+			ImVec4 colorTxt = ImVec4(1, 1, 1, 1);
+			switch (it.color) {
+			case 0:
+				colorTxt = ImVec4(1, 1, 1, 1);//white
+				break;
+			case 1:
+				colorTxt = ImVec4(1, 0,0, 1);//red
+				break;
+			case 2:
+				colorTxt = ImVec4(0,0, 1, 1);//blue
+				break;
+			case 3:
+				colorTxt = ImVec4(1, 1, 0, 1);//yellow
+				break;
+			}
+			ImGui::TextColored(colorTxt, it.txt.c_str());
 		}
 
 		
@@ -106,9 +121,10 @@ bool ModuleNetworkingClient::gui()
 	return true;
 }
 
-void ModuleNetworkingClient::sendToChat(const char * txt) 
+void ModuleNetworkingClient::sendToChat(const char * txt, int color) 
 {
-	chat.push_back(std::string(txt));
+	ChatMsg msg = ChatMsg(txt, color);
+	chat.push_back(msg);
 }
 void ModuleNetworkingClient::clearChat() 
 {
@@ -124,10 +140,12 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 		case ServerMessage::Welcome: {
 			std::string msg = std::string();
 			packet >> msg;
+			int color;
+			packet >> color;
 			bool colorRed = true;
 			packet >> colorRed;
 			LOG(msg.c_str());
-			sendToChat(msg.c_str());
+			sendToChat(msg.c_str(), color);
 			break; 
 		}
 		case ServerMessage::UserNameExists: {
@@ -140,15 +158,19 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 		}
 		case ServerMessage::UserLeft: {
 			std::string msg = std::string();
-			packet >> msg;
-			sendToChat(msg.c_str());
+			packet >> msg; 
+			int color;
+			packet >> color;
+			sendToChat(msg.c_str(),color);
 			LOG(msg.c_str());
 			break;
 		}
 		case ServerMessage::UserJoin: {
 			std::string msg = std::string();
-			packet >> msg;
-			sendToChat(msg.c_str());
+			packet >> msg; 
+			int color;
+			packet >> color;
+			sendToChat(msg.c_str(), color);
 			LOG(msg.c_str());
 			break;
 		}
@@ -158,9 +180,11 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 			char txt[MAX_CHAR_INPUT_CHAT];
 			memset(txt, 0, IM_ARRAYSIZE(txt));
 			
-			packet >> txt;
+			packet >> txt; 
+			int color;
+			packet >> color;
 			std::string newtext = std::string(emitter + " says: " + txt);
-			sendToChat(newtext.c_str());
+			sendToChat(newtext.c_str(),color);
 			break;
 		}
 	}

@@ -4,7 +4,12 @@
 class ModuleNetworkingClient : public ModuleNetworking
 {
 public:
+	struct ChatMsg {
 
+		ChatMsg(std::string _chat, int _color) : txt(_chat), color(_color) {};		
+		std::string txt;
+		int color = 0; //0 white, 1 red, 2 blue
+	};
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworkingClient public methods
 	//////////////////////////////////////////////////////////////////////
@@ -25,7 +30,7 @@ private:
 
 	bool gui() override;
 
-	void sendToChat(const char* txt);
+	void sendToChat(const char* txt, int color);
 
 	void clearChat();
 
@@ -55,7 +60,7 @@ private:
 	sockaddr_in serverAddress = {};
 	SOCKET _socket = INVALID_SOCKET;
 
-	std::vector<std::string> chat;
+	std::vector<ChatMsg> chat;
 
 	std::string playerName;
 	char chatTxt[MAX_CHAR_INPUT_CHAT];
