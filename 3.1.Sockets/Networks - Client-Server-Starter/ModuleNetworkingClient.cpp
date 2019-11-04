@@ -91,6 +91,9 @@ bool ModuleNetworkingClient::gui()
 			case 3:
 				colorTxt = ImVec4(1, 1, 0, 1);//yellow
 				break;
+			case 4:
+				colorTxt = ImVec4(0, 1, 0, 1);//green
+				break;
 			}
 			ImGui::TextColored(colorTxt, it.txt.c_str());
 		}
@@ -99,17 +102,20 @@ bool ModuleNetworkingClient::gui()
 		ImGui::InputText("", chatTxt, IM_ARRAYSIZE(chatTxt) );
 		ImGui::SameLine();
 		if (ImGui::Button("Send")) {
-			OutputMemoryStream packet;
-			packet << ClientMessage::SendChatMsg;
-			packet << playerName;
-			packet << chatTxt;
-			if (sendPacket(packet, _socket)) {
+			if (!isCommand(chatTxt)) {
 
-				memset(chatTxt, 0, IM_ARRAYSIZE(chatTxt));
-			}
-			else {
-				ELOG("sending chat message.");
-				reportError("sending chat message.");
+				OutputMemoryStream packet;
+				packet << ClientMessage::SendChatMsg;
+				packet << playerName;
+				packet << chatTxt;
+				if (sendPacket(packet, _socket)) {
+
+					memset(chatTxt, 0, IM_ARRAYSIZE(chatTxt));
+				}
+				else {
+					ELOG("sending chat message.");
+					reportError("sending chat message.");
+				}
 			}
 		}
 		ImGui::EndChild();
@@ -129,6 +135,26 @@ void ModuleNetworkingClient::sendToChat(const char * txt, int color)
 void ModuleNetworkingClient::clearChat() 
 {
 	chat.clear();
+}
+
+bool ModuleNetworkingClient::isCommand(const char *txt)
+{
+	if (txt[0] == '/') {
+		if (strcmp(txt, HELP_COMMAND) == 0) {
+			// do help
+			OutputMemoryStream packet;
+			packet << ClientMessage::RequestHelpCommand;
+			if (!sendPacket(packet, _socket)) {
+				ELOG("Error showing help command message.");
+				reportError("showing help command message.");
+			}
+		}
+		else {
+			sendToChat("Unknown command, type /help.", 1);//red
+		}
+	}
+	else
+		return false;
 }
 
 void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemoryStream &packet)
@@ -185,6 +211,14 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 			packet >> color;
 			std::string newtext = std::string(emitter + " says: " + txt);
 			sendToChat(newtext.c_str(),color);
+			break;
+		}
+		case ServerMessage::ShowHelpCommand: {
+			std::string txt = std::string();
+			packet >> txt;
+			int color;
+			packet >> color;
+			sendToChat(txt.c_str(), color);
 			break;
 		}
 	}

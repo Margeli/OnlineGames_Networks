@@ -7,6 +7,7 @@ enum class ClientMessage
 {
 	Hello,
 	SendChatMsg,
+	RequestHelpCommand
 };
 
 enum class ServerMessage
@@ -15,6 +16,7 @@ enum class ServerMessage
 	UserNameExists, 
 	UserJoin,
 	UserLeft,
-	ReceiveChatMsg
+	ReceiveChatMsg,
+	ShowHelpCommand
 };
 

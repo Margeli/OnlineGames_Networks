@@ -1,6 +1,7 @@
 #pragma once
 
 #define MAX_CHAR_INPUT_CHAT 64
+#define HELP_COMMAND "/help"
 
 class ModuleNetworking : public Module
 {

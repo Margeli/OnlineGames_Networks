@@ -8,7 +8,7 @@ public:
 
 		ChatMsg(std::string _chat, int _color) : txt(_chat), color(_color) {};		
 		std::string txt;
-		int color = 0; //0 white, 1 red, 2 blue
+		int color = 0; //0 white, 1 red, 2 blue, 3 yellow, 4 green
 	};
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworkingClient public methods
@@ -33,6 +33,8 @@ private:
 	void sendToChat(const char* txt, int color);
 
 	void clearChat();
+
+	bool isCommand(const char*);
 
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworking virtual methods

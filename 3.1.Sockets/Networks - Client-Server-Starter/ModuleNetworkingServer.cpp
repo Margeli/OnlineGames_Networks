@@ -212,6 +212,19 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 			
 		}
 	}
+	if (clientMessage == ClientMessage::RequestHelpCommand) {
+		OutputMemoryStream packet;
+		packet << ServerMessage::ShowHelpCommand;
+		std::string txt = std::string(HELP_COMMAND );
+		txt += +": Cannot help sorry";
+		int color = 4; //green
+		packet << txt;
+		packet << color;
+		if (!sendPacket(packet,socket))
+		{
+			reportError("sending help command message");
+		}
+	}
 }
 
 void ModuleNetworkingServer::onSocketDisconnected(SOCKET socket)
