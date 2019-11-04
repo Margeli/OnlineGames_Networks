@@ -157,7 +157,7 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 				else {//if name already exists.
 					OutputMemoryStream welcomePacket; //---------------WELCOME MESSAGE
 					welcomePacket << ServerMessage::Welcome;
-					std::string msg = std::string("This is a welcome text! You have succesfully logged in into the chat! ");
+					std::string msg = std::string("******WELCOME TO THE CHAT******");
 					welcomePacket << msg;
 					bool colorRed = false;
 					welcomePacket << colorRed;
@@ -182,6 +182,29 @@ void ModuleNetworkingServer::onSocketReceivedData(SOCKET socket, const InputMemo
 				}
 			}
 		}		
+	}
+	if (clientMessage == ClientMessage::SendChatMsg) {
+		std::string sender = std::string();
+		char txt[MAX_CHAR_INPUT_CHAT];
+		memset(txt, 0, IM_ARRAYSIZE(txt));
+		packet >> sender;
+		packet >> txt; 
+
+		OutputMemoryStream chatTxtPacket;
+		chatTxtPacket << ServerMessage::ReceiveChatMsg;
+		
+		chatTxtPacket << sender;
+		chatTxtPacket << txt;
+
+
+		for (auto &connectedSocket : connectedSockets) {
+			
+				if (!sendPacket(chatTxtPacket, connectedSocket.socket))
+				{
+					reportError("sending chat message");
+				}
+			
+		}
 	}
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#define MAX_CHAR_INPUT_CHAT 64
 
 class ModuleNetworking : public Module
 {

@@ -73,16 +73,51 @@ bool ModuleNetworkingClient::gui()
 		}
 
 		ImGui::Text("%s connected to the server...", playerName.c_str());
+		
+		ImGui::Separator();
+		ImGui::BeginChild("------------------CHAT------------------");
+		for (auto &it : chat) {
+			ImGui::Text(it.c_str());
+		}
 
+		
+		ImGui::InputText("", chatTxt, IM_ARRAYSIZE(chatTxt) );
+		ImGui::SameLine();
+		if (ImGui::Button("Send")) {
+			OutputMemoryStream packet;
+			packet << ClientMessage::SendChatMsg;
+			packet << playerName;
+			packet << chatTxt;
+			if (sendPacket(packet, _socket)) {
+
+				memset(chatTxt, 0, IM_ARRAYSIZE(chatTxt));
+			}
+			else {
+				ELOG("sending chat message.");
+				reportError("sending chat message.");
+			}
+		}
+		ImGui::EndChild();
 		ImGui::End();
 	}
+	
+	
 
 	return true;
 }
 
+void ModuleNetworkingClient::sendToChat(const char * txt) 
+{
+	chat.push_back(std::string(txt));
+}
+void ModuleNetworkingClient::clearChat() 
+{
+	chat.clear();
+}
+
 void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemoryStream &packet)
 {
-	//state = ClientState::Stopped;
+	
 	ServerMessage serverMessage;
 	packet >> serverMessage;
 	switch (serverMessage) {
@@ -92,6 +127,7 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 			bool colorRed = true;
 			packet >> colorRed;
 			LOG(msg.c_str());
+			sendToChat(msg.c_str());
 			break; 
 		}
 		case ServerMessage::UserNameExists: {
@@ -105,13 +141,26 @@ void ModuleNetworkingClient::onSocketReceivedData(SOCKET socket, const InputMemo
 		case ServerMessage::UserLeft: {
 			std::string msg = std::string();
 			packet >> msg;
+			sendToChat(msg.c_str());
 			LOG(msg.c_str());
 			break;
 		}
 		case ServerMessage::UserJoin: {
 			std::string msg = std::string();
 			packet >> msg;
+			sendToChat(msg.c_str());
 			LOG(msg.c_str());
+			break;
+		}
+		case ServerMessage::ReceiveChatMsg: {
+			std::string emitter = std::string();
+			packet >> emitter;
+			char txt[MAX_CHAR_INPUT_CHAT];
+			memset(txt, 0, IM_ARRAYSIZE(txt));
+			
+			packet >> txt;
+			std::string newtext = std::string(emitter + " says: " + txt);
+			sendToChat(newtext.c_str());
 			break;
 		}
 	}
@@ -122,6 +171,6 @@ void ModuleNetworkingClient::onSocketDisconnected(SOCKET socket)
 {
 	state = ClientState::Stopped;
 	shutdown(socket, 2);	
-	
+	clearChat();
 }
 

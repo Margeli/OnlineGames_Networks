@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ModuleNetworking.h"
-
 class ModuleNetworkingClient : public ModuleNetworking
 {
 public:
@@ -26,7 +25,9 @@ private:
 
 	bool gui() override;
 
+	void sendToChat(const char* txt);
 
+	void clearChat();
 
 	//////////////////////////////////////////////////////////////////////
 	// ModuleNetworking virtual methods
@@ -54,6 +55,9 @@ private:
 	sockaddr_in serverAddress = {};
 	SOCKET _socket = INVALID_SOCKET;
 
+	std::vector<std::string> chat;
+
 	std::string playerName;
+	char chatTxt[MAX_CHAR_INPUT_CHAT];
 };
 
