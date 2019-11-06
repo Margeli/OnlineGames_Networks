@@ -1,4 +1,5 @@
 #include "Networks.h"
+#include "ModuleNetworkingClient.h"
 
 
 
@@ -128,6 +129,7 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 	else if (state == ClientState::Playing)
 	{
 		// TODO(jesus): Handle incoming messages from server
+		
 	}
 }
 
@@ -153,6 +155,15 @@ void ModuleNetworkingClient::onUpdate()
 	}
 	else if (state == ClientState::Playing)
 	{
+		if (Time.time - lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
+			ELOG("client connection timeout with the server.");
+			onDisconnect();
+		}
+
+		secondsSinceLastPing += Time.deltaTime;
+		if (secondsSinceLastPing > PING_INTERVAL_SECONDS) //sends ping every PING_INTERVAL_SECONDS
+			sendPing();
+
 		secondsSinceLastInputDelivery += Time.deltaTime;
 
 		if (inputDataBack - inputDataFront < ArrayCount(inputData))
@@ -220,3 +231,12 @@ void ModuleNetworkingClient::onDisconnect()
 
 	App->modRender->cameraPosition = {};
 }
+
+void ModuleNetworkingClient::sendPing()
+{
+	OutputMemoryStream pingPacket;
+	pingPacket << ClientMessage::Ping;
+	sendPacket(pingPacket, serverAddress);
+	secondsSinceLastPing = 0.0f;
+}
+
