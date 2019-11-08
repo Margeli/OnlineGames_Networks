@@ -128,8 +128,10 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 	}
 	else if (state == ClientState::Playing)
 	{
-		// TODO(jesus): Handle incoming messages from server
-		
+		// TO_DO(jesus): Handle incoming messages from server
+		if (message == ServerMessage::Replication) {
+			replicationManagerClient.read(packet);
+		}
 	}
 }
 
