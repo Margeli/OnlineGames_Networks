@@ -214,13 +214,13 @@ void ModuleNetworkingServer::onUpdate()
 					sendPacket(pingPacket, clientProxy.address);
 				}
 				clientProxy.secondsSinceLastReplication += Time.deltaTime;
-				if (replicationDeliveryIntervalSeconds > clientProxy.secondsSinceLastReplication) {
+				if (replicationDeliveryIntervalSeconds < clientProxy.secondsSinceLastReplication) {
 					if (!clientProxy.replicationManagerServer.replicationCommands.empty()) {
-						OutputMemoryStream packet;
-						packet << ServerMessage::Replication;
-						clientProxy.replicationManagerServer.write(packet);
+						OutputMemoryStream RepPacket;
+						RepPacket << ServerMessage::Replication;
+						clientProxy.replicationManagerServer.write(RepPacket);
 						clientProxy.secondsSinceLastReplication = 0;
-						sendPacket(packet, clientProxy.address);
+						sendPacket(RepPacket, clientProxy.address);
 					}
 				}
 

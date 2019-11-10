@@ -83,8 +83,10 @@ public:
 	}
 
 	void Write(const vec2& vec) {
-		Write(vec.x);
-		Write(vec.y);
+		float it = vec.x;		
+		Write(it);
+		it = vec.y;
+		Write(it);
 	}
 
 	// Generic operator <<
@@ -189,8 +191,11 @@ public:
 	}
 
 	void Read(vec2& vec) const  {
-		Read(vec.x);
-		Read(vec.y);
+		float f = 0;
+		Read(f);
+		vec.x = f;
+		Read(f);
+		vec.y = f;
 	}
 
 	// Generic operator >>
