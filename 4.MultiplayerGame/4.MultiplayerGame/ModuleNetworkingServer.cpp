@@ -214,7 +214,7 @@ void ModuleNetworkingServer::onUpdate()
 					sendPacket(pingPacket, clientProxy.address);
 				}
 				clientProxy.secondsSinceLastReplication += Time.deltaTime;
-				if (replicationDeliveryIntervalSeconds < clientProxy.secondsSinceLastReplication) {
+				if (clientProxy.secondsSinceLastReplication > replicationDeliveryIntervalSeconds) {
 					if (!clientProxy.replicationManagerServer.replicationCommands.empty()) {
 						OutputMemoryStream RepPacket;
 						RepPacket << ServerMessage::Replication;

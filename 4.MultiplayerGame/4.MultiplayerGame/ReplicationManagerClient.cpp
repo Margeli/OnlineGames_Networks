@@ -14,6 +14,11 @@ void ReplicationManagerClient::read(const InputMemoryStream & packet)
 			App->modLinkingContext->registerNetworkGameObjectWithNetworkId(g, networkID);
 			packet >> g->position;
 			packet >> g->angle;
+			packet >> g->size;
+			std::string textureDir = std::string();
+			packet >> textureDir;
+			g->texture = App->modTextures->loadTexture(textureDir.c_str());
+			
 			/*int type = 0;
 			packet >> type;			
 			switch (type) {

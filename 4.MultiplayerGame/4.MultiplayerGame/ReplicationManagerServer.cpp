@@ -32,6 +32,9 @@ void ReplicationManagerServer::write(OutputMemoryStream& packet)
 			if (it.second == ReplicationAction::Create) {
 				packet << g->position;
 				packet << g->angle;
+				packet << g->size;
+				std::string textureDir = std::string(g->texture->filename);
+				packet << textureDir;
 			}
 			else if (it.second == ReplicationAction::Update) {
 				packet << g->position;
