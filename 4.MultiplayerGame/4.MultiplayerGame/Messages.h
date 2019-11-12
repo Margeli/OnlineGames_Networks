@@ -2,14 +2,14 @@
 
 enum class ClientMessage
 {
-	Hello,
+	Hello = 8758,
 	Input,
 	Ping
 };
 
 enum class ServerMessage
 {
-	Welcome,
+	Welcome = 4567,
 	Unwelcome,
 	Replication,
 	Ping

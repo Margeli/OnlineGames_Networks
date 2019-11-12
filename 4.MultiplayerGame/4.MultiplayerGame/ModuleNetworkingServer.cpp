@@ -205,7 +205,9 @@ void ModuleNetworkingServer::onUpdate()
 			{
 				if (Time.time - clientProxy.lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 					ELOG("client connection timeout with the server.");
+					NetworkDestroy(clientProxy.gameObject);
 					destroyClientProxy(&clientProxy); //check??
+					
 					break;
 				}
 				if (sendPing) { //server PING to every client
@@ -215,7 +217,7 @@ void ModuleNetworkingServer::onUpdate()
 				}
 				clientProxy.secondsSinceLastReplication += Time.deltaTime;
 				if (clientProxy.secondsSinceLastReplication > replicationDeliveryIntervalSeconds) {
-					if (!clientProxy.replicationManagerServer.replicationCommands.empty()) {
+					if (clientProxy.replicationManagerServer.replicationCommands.size()>0) {
 						OutputMemoryStream RepPacket;
 						RepPacket << ServerMessage::Replication;
 						clientProxy.replicationManagerServer.write(RepPacket);

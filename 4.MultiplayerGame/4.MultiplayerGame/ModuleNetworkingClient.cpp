@@ -160,6 +160,7 @@ void ModuleNetworkingClient::onUpdate()
 		if (Time.time - lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 			ELOG("client connection timeout with the server.");
 			onDisconnect();
+			disconnect();
 		}
 
 		secondsSinceLastPing += Time.deltaTime;
