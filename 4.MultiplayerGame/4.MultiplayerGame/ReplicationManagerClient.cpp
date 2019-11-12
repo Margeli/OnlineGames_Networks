@@ -9,37 +9,67 @@ void ReplicationManagerClient::read(const InputMemoryStream & packet)
 		int actionId = 0;
 		packet >> actionId;
 		ReplicationAction action = ReplicationAction(actionId);
-		if (action == ReplicationAction::Destroy) {
-			GameObject* g = App->modLinkingContext->getNetworkGameObject(networkID);
-			if (g != nullptr) {
-				App->modLinkingContext->unregisterNetworkGameObject(g);
-				Destroy(g);
-			}
-			else {
-				ELOG("network ID object not found %i", networkID);
-			}
-		}
-		else if (action == ReplicationAction::Create) {
-			GameObject* g = Instantiate();
-			App->modLinkingContext->registerNetworkGameObjectWithNetworkId(g, networkID);
-			packet >> g->position;
-			packet >> g->angle;
-			packet >> g->size;
-			std::string textureDir = std::string();
-			packet >> textureDir;
-			g->texture = App->modTextures->loadTexture(textureDir.c_str());
 
+		switch (action) {
+		case ReplicationAction::Create: {
+			CreatePacket cPack;
+			packet >> cPack.position;
+			packet >> cPack.angle;
+			packet >> cPack.size;
+			packet >> cPack.texName;
+			cPack.networkID = networkID;
+			packetsToCrate.push_back(cPack);
+			break;
 		}
-		else if (action == ReplicationAction::Update) {
-			GameObject* g = App->modLinkingContext->getNetworkGameObject(networkID);
-			if (g != nullptr) {
-				packet >> g->position;
-				packet >> g->angle;
-			}
-			else {
-				ELOG("network ID object not found %i", networkID);
-			}
+		case ReplicationAction::Update: {
+			UpdatePacket uPack;
+			packet >> uPack.position;
+			packet >> uPack.angle;
+			uPack.networkID = networkID;
+			packetsToUpdate.push_back(uPack);
+			break;
 		}
-
+		case ReplicationAction::Destroy: {
+			DestroyPacket dPack;
+			dPack.networkID = networkID;
+			packetsToDestroy.push_back(dPack);
+			break;
+		}
+		}
 	}
+
+	for (auto &it : packetsToDestroy) {
+		GameObject* g = App->modLinkingContext->getNetworkGameObject(it.networkID);
+		if (g != nullptr) {
+			App->modLinkingContext->unregisterNetworkGameObject(g);
+			Destroy(g);
+		}
+		else {
+			ELOG("network ID object not found %i", it.networkID);
+		}
+	}
+	packetsToDestroy.clear();
+
+	for (auto &it : packetsToCrate) {
+		GameObject* g = Instantiate();
+		App->modLinkingContext->registerNetworkGameObjectWithNetworkId(g, it.networkID);
+		g->position = it.position;
+		g->angle = it.angle;
+		g->size = it.size;
+		g->texture = App->modTextures->loadTexture(it.texName.c_str());
+	}
+	packetsToCrate.clear();
+
+	for (auto &it : packetsToUpdate) {
+		GameObject* g = App->modLinkingContext->getNetworkGameObject(it.networkID);
+		if (g != nullptr) {
+			g->position = it.position;
+			g->angle = it.angle;
+		}
+		else {
+			ELOG("network ID object not found %i", it.networkID);
+		}
+	}
+	packetsToUpdate.clear();
+		
 }
