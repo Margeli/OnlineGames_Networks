@@ -168,6 +168,9 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 					packet >> inputData.verticalAxis;
 					packet >> inputData.buttonBits;
 
+					//get the packet's last sequence number and send it to the client 
+					//in a replication packet
+
 					if (inputData.sequenceNumber >= proxy->nextExpectedInputSequenceNumber)
 					{
 						proxy->gamepad.horizontalAxis = inputData.horizontalAxis;
@@ -175,8 +178,9 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 						unpackInputControllerButtons(inputData.buttonBits, proxy->gamepad);
 						proxy->gameObject->behaviour->onInput(proxy->gamepad);
 						proxy->nextExpectedInputSequenceNumber = inputData.sequenceNumber + 1;
+						proxy->lastInputSequenceNumberReceived = inputData.sequenceNumber;
 					}
-				}
+				}				
 			}
 		}
 		
@@ -217,13 +221,16 @@ void ModuleNetworkingServer::onUpdate()
 				}
 				clientProxy.secondsSinceLastReplication += Time.deltaTime;
 				if (clientProxy.secondsSinceLastReplication > replicationDeliveryIntervalSeconds) {
-					if (clientProxy.replicationManagerServer.replicationCommands.size()>0) {
+					
 						OutputMemoryStream RepPacket;
 						RepPacket << ServerMessage::Replication;
-						clientProxy.replicationManagerServer.write(RepPacket);
+						uint32 num = clientProxy.lastInputSequenceNumberReceived;
+						RepPacket << num;
+						if (clientProxy.replicationManagerServer.replicationCommands.size() > 0) {
+							clientProxy.replicationManagerServer.write(RepPacket);
+						}
 						clientProxy.secondsSinceLastReplication = 0;
 						sendPacket(RepPacket, clientProxy.address);
-					}
 				}
 
 
