@@ -130,6 +130,11 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 	{
 		// TO_DO(jesus): Handle incoming messages from server
 		if (message == ServerMessage::Replication) {
+			uint32 lastInputSequenceNum=0;
+			packet >> lastInputSequenceNum;
+			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
+				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+			}
 			replicationManagerClient.read(packet);
 		}
 	}
@@ -169,6 +174,8 @@ void ModuleNetworkingClient::onUpdate()
 
 		secondsSinceLastInputDelivery += Time.deltaTime;
 
+		inputDataFront = lastInputSequenceNumberReceivedByServer;//
+
 		if (inputDataBack - inputDataFront < ArrayCount(inputData))
 		{
 			uint32 currentInputData = inputDataBack++;
@@ -196,7 +203,9 @@ void ModuleNetworkingClient::onUpdate()
 				}
 
 				// Clear the queue
-				inputDataFront = inputDataBack;
+				//inputDataFront = inputDataBack;
+
+				//TODO
 
 				sendPacket(packet, serverAddress);
 			}

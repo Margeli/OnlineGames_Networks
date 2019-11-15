@@ -16,6 +16,8 @@ void ReplicationManagerServer::destroy(uint32 networkId)
 	replicationCommands[networkId] = ReplicationAction::Destroy;
 }
 
+
+
 void ReplicationManagerServer::write(OutputMemoryStream& packet)
 {
 
@@ -43,4 +45,6 @@ void ReplicationManagerServer::write(OutputMemoryStream& packet)
 		}
 	}
 	replicationCommands.clear();
+
+	
 }

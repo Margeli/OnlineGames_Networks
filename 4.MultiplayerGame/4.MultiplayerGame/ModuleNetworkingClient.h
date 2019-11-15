@@ -72,6 +72,7 @@ private:
 	uint32 inputDataFront = 0;
 	uint32 inputDataBack = 0;
 
+	uint32 lastInputSequenceNumberReceivedByServer = 0;
 	float inputDeliveryIntervalSeconds = 0.05f;
 	float secondsSinceLastInputDelivery = 0.0f;
 
