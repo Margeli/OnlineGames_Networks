@@ -40,7 +40,7 @@ void ReplicationManagerServer::write(OutputMemoryStream& packet)
 				packet << g->angle;
 			}				
 			else if (it.second == ReplicationAction::Destroy) {
-				int i = 20;
+				//int i = 20;
 			}
 		}
 	}
