@@ -21,6 +21,5 @@ class ReplicationManagerServer {
 
 		void write(OutputMemoryStream& packet);
 
-		
 		std::unordered_map<uint32, ReplicationAction> replicationCommands;
 };
