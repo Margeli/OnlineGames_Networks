@@ -4,7 +4,8 @@ enum class ClientMessage
 {
 	Hello = 8758,
 	Input,
-	Ping
+	Ping,
+	ReplicationAck
 };
 
 enum class ServerMessage

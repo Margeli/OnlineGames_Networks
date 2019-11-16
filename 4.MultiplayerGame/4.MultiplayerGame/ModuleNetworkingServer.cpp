@@ -183,7 +183,12 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 				}				
 			}
 		}
-		
+
+		else if (message == ClientMessage::ReplicationAck) {			
+
+			proxy->deliveryManagerServer.processAckdSequenceNumbers(packet);
+		}
+
 		if (proxy != nullptr)
 		{
 			proxy->lastPacketReceivedTime = Time.time;
@@ -207,6 +212,7 @@ void ModuleNetworkingServer::onUpdate()
 		{
 			if (clientProxy.connected)
 			{
+				///////////////////////////////////////TIMEOUT
 				if (Time.time - clientProxy.lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 					ELOG("client connection timeout with the server.");
 					NetworkDestroy(clientProxy.gameObject);
@@ -214,29 +220,49 @@ void ModuleNetworkingServer::onUpdate()
 					
 					break;
 				}
+				///////////////////////////////////////-TIMEOUT
+
+				///////////////////////////////////////PING
 				if (sendPing) { //server PING to every client
 					OutputMemoryStream pingPacket;
 					pingPacket << ServerMessage::Ping;
 					sendPacket(pingPacket, clientProxy.address);
 				}
+				///////////////////////////////////////-PING
+
+				///////////////////////////////////////REPLICATION
+				
+				// TO_DO(jesus): If the replication interval passed and the replication manager of this proxy
+				//              has pending data, write and send a replication packet to this client.
 				clientProxy.secondsSinceLastReplication += Time.deltaTime;
 				if (clientProxy.secondsSinceLastReplication > replicationDeliveryIntervalSeconds) {
 					
 						OutputMemoryStream RepPacket;
 						RepPacket << ServerMessage::Replication;
+						//replication message containing the input sequence number
 						uint32 num = clientProxy.lastInputSequenceNumberReceived;
 						RepPacket << num;
+
+						//writing the replication sequence number
+						Delivery* delivery = clientProxy.deliveryManagerServer.writeSequenceNumber(RepPacket);
+						delivery->delegate = this;
+
+						//writing the replication data
 						if (clientProxy.replicationManagerServer.replicationCommands.size() > 0) {
 							clientProxy.replicationManagerServer.write(RepPacket);
 						}
 						clientProxy.secondsSinceLastReplication = 0;
 						sendPacket(RepPacket, clientProxy.address);
 				}
+				///////////////////////////////////////-REPLICATION
 
 
-				// TO_DO(jesus): If the replication interval passed and the replication manager of this proxy
-				//              has pending data, write and send a replication packet to this client.
-			}
+				///////////////////////////////////////DELIVERY ACKNOWLEDGEMENT
+				
+				clientProxy.deliveryManagerServer.processTimedOutPackets();
+				///////////////////////////////////////-DELIVERY ACKNOWLEDGEMENT
+
+				}
 		}
 	}
 }
@@ -245,7 +271,7 @@ void ModuleNetworkingServer::onConnectionReset(const sockaddr_in & fromAddress)
 {
 	// Find the client proxy
 	ClientProxy *proxy = getClientProxy(fromAddress);
-
+	
 	if (proxy)
 	{
 		// Notify game object deletion to replication managers
@@ -443,6 +469,19 @@ void ModuleNetworkingServer::updateNetworkObject(GameObject * gameObject)
 			clientProxies[i].replicationManagerServer.update(gameObject->networkId);
 		}
 	}
+}
+
+//////////////////////////////////////////////////////////////////////
+		// DeliveryDelegate virtual methods
+//////////////////////////////////////////////////////////////////////
+void ModuleNetworkingServer::onDeliverySuccess(DeliveryManager * deliveryManger)
+{
+	int i = 101;
+}
+
+void ModuleNetworkingServer::onDeliveryFailure(DeliveryManager * deliveryManger)
+{
+	int i = 101;
 }
 
 

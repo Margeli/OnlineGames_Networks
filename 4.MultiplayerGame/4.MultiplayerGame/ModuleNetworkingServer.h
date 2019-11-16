@@ -2,7 +2,7 @@
 
 #include "ModuleNetworking.h"
 
-class ModuleNetworkingServer : public ModuleNetworking
+class ModuleNetworkingServer : public ModuleNetworking, public DeliveryDelegate
 {
 public:
 
@@ -57,6 +57,7 @@ private:
 		InputController gamepad;
 
 		ReplicationManagerServer replicationManagerServer;
+		DeliveryManager deliveryManagerServer;
 	};
 
 	ClientProxy clientProxies[MAX_CLIENTS];
@@ -114,6 +115,17 @@ private:
 	float secondsSinceLastPing = 0.0f;
 	
 	float replicationDeliveryIntervalSeconds = 0.1f;
+
+	private:
+
+		//----------TO CHECK
+		//////////////////////////////////////////////////////////////////////
+		// DeliveryDelegate virtual methods
+		//////////////////////////////////////////////////////////////////////
+
+		void onDeliverySuccess(DeliveryManager* deliveryManger)override;
+		void onDeliveryFailure(DeliveryManager* deliveryManger)override;
+
 };
 
 

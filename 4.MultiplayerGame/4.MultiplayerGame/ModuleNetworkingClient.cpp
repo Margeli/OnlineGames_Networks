@@ -130,12 +130,20 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 	{
 		// TO_DO(jesus): Handle incoming messages from server
 		if (message == ServerMessage::Replication) {
+
+			//replication message containing the input sequence number
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
 			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
 				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
 			}
-			replicationManagerClient.read(packet);
+			//replication sequence number
+			if (deliveryManagerClient.processSequenceNumber(packet)) {
+				//if the replication sequence number is the correct
+
+				//reading the replication data
+				replicationManagerClient.read(packet);
+			}		
 		}
 	}
 }
@@ -162,16 +170,21 @@ void ModuleNetworkingClient::onUpdate()
 	}
 	else if (state == ClientState::Playing)
 	{
+		//////////////////////////////////////////TIMEOUT
 		if (Time.time - lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 			ELOG("client connection timeout with the server.");
 			onDisconnect();
 			disconnect();
 		}
+		////////////////////////////////////////////-TIMEOUT
 
+		/////////////////////////////////////////PING
 		secondsSinceLastPing += Time.deltaTime;
 		if (secondsSinceLastPing > PING_INTERVAL_SECONDS) //sends ping every PING_INTERVAL_SECONDS
 			sendPing();
+		/////////////////////////////////////////-PING
 
+		//////////////////////////////////////////INPUT
 		secondsSinceLastInputDelivery += Time.deltaTime;
 
 		inputDataFront = lastInputSequenceNumberReceivedByServer;//
@@ -204,12 +217,23 @@ void ModuleNetworkingClient::onUpdate()
 
 				// Clear the queue
 				//inputDataFront = inputDataBack;
-
-				//TODO
-
+				
 				sendPacket(packet, serverAddress);
 			}
 		}
+		/////////////////////////////////////-INPUT
+
+		////////////////////////////////REPLICATION PENDING ACK
+		if (deliveryManagerClient.hasSequenceNumberPendingAck()) {
+			OutputMemoryStream repPacket;
+			repPacket << ClientMessage::ReplicationAck;
+			deliveryManagerClient.writeSequenceNumbersPendingAck(repPacket);
+
+			sendPacket(repPacket, serverAddress);
+		}
+
+		//////////////////////////////////-REPLICATION PENDING ACK
+
 	}
 
 	// Make the camera focus the player game object

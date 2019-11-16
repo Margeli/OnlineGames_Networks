@@ -14,8 +14,6 @@ struct Delivery
 	uint32 sequenceNumber = 0;
 	double dispatchTime = 0.0f;
 	DeliveryDelegate* delegate = nullptr;
-
-	//void onSuccess
 };
 	
 class DeliveryManager

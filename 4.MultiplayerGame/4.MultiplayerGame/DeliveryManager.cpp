@@ -3,32 +3,91 @@
 
 Delivery * DeliveryManager::writeSequenceNumber(OutputMemoryStream & packet)
 {
-	return nullptr;
+	packet << nextSequenceNumber;
+
+	Delivery delivery;
+	delivery.dispatchTime = Time.time;
+	delivery.sequenceNumber = nextSequenceNumber++;
+
+	pendingDeliveries.push_back(delivery);
+	
+	return &delivery;
 }
 
 bool DeliveryManager::processSequenceNumber(const InputMemoryStream & packet)
 {
+	uint32 receivedSequenceNumber = 0;
+	packet >> receivedSequenceNumber;
+	if (expectedSequenceNumber == receivedSequenceNumber) {		
+		pendingAckDeliveries.push_back(receivedSequenceNumber); 
+		++expectedSequenceNumber;
+		return true;
+	}
+
 	return false;
 }
 
 bool DeliveryManager::hasSequenceNumberPendingAck() const
 {
-	return false;
+	return !pendingAckDeliveries.empty();
 }
 
-bool DeliveryManager::writeSequenceNumbersPendingAck()
-{
-	return false;
+void DeliveryManager::writeSequenceNumbersPendingAck(OutputMemoryStream &packet)
+{	
+	for (auto &it : pendingAckDeliveries) {
+		uint32 sequenceNum = it;
+		packet << sequenceNum;
+	}	
+	pendingAckDeliveries.clear();
 }
 
-void DeliveryManager::processAckdSequenceNumbers(const InputMemoryStream & paket)
+void DeliveryManager::processAckdSequenceNumbers(const InputMemoryStream & packet)
 {
+	while (packet.RemainingByteCount() > 0) {
+		uint32 seqNumber = 0;
+		packet >> seqNumber;
+		bool deliveryFound = false;
+		for(auto it = pendingDeliveries.begin(); it!=pendingDeliveries.end(); it++)
+		{
+			if ((*it).sequenceNumber == seqNumber) {
+				if ((*it).delegate) {//not null
+					(*it).delegate->onDeliverySuccess(this);
+				}
+				pendingDeliveries.erase(it);
+				deliveryFound = true;
+				break;
+			}			
+		}
+		if (!deliveryFound) {
+		
+			//error: sequence number to acknowledge is missing!
+			int i = 101;
+		}
+	}
+	int i = 101;
 }
 
 void DeliveryManager::processTimedOutPackets()
 {
+	std::vector<int> deliveryIndexToDelete;
+	for (int i = 0; i < pendingDeliveries.size(); i++)
+	{
+		if (Time.time - pendingDeliveries[i].dispatchTime > PACKET_DELIVERY_TIMEOUT_SECONDS) {
+			if(pendingDeliveries[i].delegate)//not null
+				pendingDeliveries[i].delegate->onDeliveryFailure(this);
+			deliveryIndexToDelete.push_back(i);
+		}
+	}
+	for (int i = deliveryIndexToDelete.size() - 1; i >= 0; i--) {
+		pendingDeliveries.erase(pendingDeliveries.begin() + deliveryIndexToDelete[i]);
+	}
+	deliveryIndexToDelete.clear();
 }
 
 void DeliveryManager::clear()
 {
+	pendingAckDeliveries.clear();
+	pendingDeliveries.clear();
+	nextSequenceNumber = 0;
+	expectedSequenceNumber = 0;
 }

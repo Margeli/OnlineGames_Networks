@@ -7,7 +7,7 @@ void ReplicationManagerServer::create(uint32 networkId)
 }
 
 void ReplicationManagerServer::update(uint32 networkId){
-	if(replicationCommands[networkId] == ReplicationAction::None)
+	if(replicationCommands[networkId] == ReplicationAction::None) //gives priority to create or destroy before update 
 		replicationCommands[networkId] = ReplicationAction::Update;
 }
 
