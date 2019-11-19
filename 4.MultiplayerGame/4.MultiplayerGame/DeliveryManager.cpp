@@ -1,13 +1,14 @@
 #include "Networks.h"
 #include "DeliveryManager.h"
 
-Delivery * DeliveryManager::writeSequenceNumber(OutputMemoryStream & packet)
+Delivery * DeliveryManager::writeSequenceNumber(OutputMemoryStream & packet, DeliveryDelegate& _delegate)
 {
 	packet << nextSequenceNumber;
 
 	Delivery delivery;
 	delivery.dispatchTime = Time.time;
 	delivery.sequenceNumber = nextSequenceNumber++;
+	delivery.delegate = &_delegate;
 
 	pendingDeliveries.push_back(delivery);
 	
@@ -53,6 +54,7 @@ void DeliveryManager::processAckdSequenceNumbers(const InputMemoryStream & packe
 				if ((*it).delegate) {//not null
 					(*it).delegate->onDeliverySuccess(this);
 				}
+				(*it).CleanUp();
 				pendingDeliveries.erase(it);
 				deliveryFound = true;
 				break;
@@ -73,8 +75,12 @@ void DeliveryManager::processTimedOutPackets()
 	for (int i = 0; i < pendingDeliveries.size(); i++)
 	{
 		if (Time.time - pendingDeliveries[i].dispatchTime > PACKET_DELIVERY_TIMEOUT_SECONDS) {
-			if(pendingDeliveries[i].delegate)//not null
+			if (pendingDeliveries[i].delegate)//not null
+			{
 				pendingDeliveries[i].delegate->onDeliveryFailure(this);
+				pendingDeliveries[i].CleanUp();
+			}
+
 			deliveryIndexToDelete.push_back(i);
 		}
 	}
@@ -86,8 +92,22 @@ void DeliveryManager::processTimedOutPackets()
 
 void DeliveryManager::clear()
 {
-	pendingAckDeliveries.clear();
+	for (auto &it : pendingDeliveries) {
+		it.CleanUp();
+	}
 	pendingDeliveries.clear();
+
+	pendingAckDeliveries.clear();
 	nextSequenceNumber = 0;
 	expectedSequenceNumber = 0;
+}
+
+
+
+void Delivery::CleanUp()
+{
+	if (delegate) {
+		delete delegate;
+		delegate = nullptr;
+	}
 }

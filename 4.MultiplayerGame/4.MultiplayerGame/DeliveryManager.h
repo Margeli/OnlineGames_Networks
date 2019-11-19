@@ -9,20 +9,22 @@ public:
 	virtual void onDeliveryFailure(DeliveryManager* deliveryManager) = 0;
 };
 
+
+
 struct Delivery
 {
 	uint32 sequenceNumber = 0;
 	double dispatchTime = 0.0f;
 	DeliveryDelegate* delegate = nullptr;
 
-	//void onSuccess
+	void CleanUp();
 };
 	
 class DeliveryManager
 {
 public:
 	//For sender to write a new seq. numner into a packet
-	Delivery* writeSequenceNumber(OutputMemoryStream &packet);
+	Delivery* writeSequenceNumber(OutputMemoryStream &packet, DeliveryDelegate &delegate);
 
 	//For receivers to process the seq. number from an incoming packet
 	bool processSequenceNumber(const InputMemoryStream &packet);
@@ -36,6 +38,8 @@ public:
 	void processTimedOutPackets();
 
 	void clear();
+
+	void resendLostDelivery(Delivery* del);
 
 private:
 	

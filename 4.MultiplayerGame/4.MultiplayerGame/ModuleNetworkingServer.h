@@ -2,7 +2,7 @@
 
 #include "ModuleNetworking.h"
 
-class ModuleNetworkingServer : public ModuleNetworking, public DeliveryDelegate
+class ModuleNetworkingServer : public ModuleNetworking
 {
 public:
 
@@ -25,6 +25,7 @@ private:
 	void onStart() override;
 
 	void onGui() override;
+
 
 	void onPacketReceived(const InputMemoryStream &packet, const sockaddr_in &fromAddress) override;
 
@@ -67,7 +68,6 @@ private:
 	ClientProxy * getClientProxy(const sockaddr_in &clientAddress);
 
 	void destroyClientProxy(ClientProxy * proxy);
-
 
 
 public:
@@ -116,15 +116,7 @@ private:
 	
 	float replicationDeliveryIntervalSeconds = 0.1f;
 
-	private:
 
-		//----------TO CHECK
-		//////////////////////////////////////////////////////////////////////
-		// DeliveryDelegate virtual methods
-		//////////////////////////////////////////////////////////////////////
-
-		void onDeliverySuccess(DeliveryManager* deliveryManger)override;
-		void onDeliveryFailure(DeliveryManager* deliveryManger)override;
 
 };
 

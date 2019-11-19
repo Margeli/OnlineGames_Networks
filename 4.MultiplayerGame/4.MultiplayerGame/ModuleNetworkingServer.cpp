@@ -244,12 +244,16 @@ void ModuleNetworkingServer::onUpdate()
 						RepPacket << num;
 
 						//writing the replication sequence number
-						Delivery* delivery = clientProxy.deliveryManagerServer.writeSequenceNumber(RepPacket);
-						delivery->delegate = this;
+						
+						ReplicationDeliveryDelegate* delegate = nullptr;
+						if (clientProxy.replicationManagerServer.replicationCommands.size() > 0)
+							delegate = new ReplicationDeliveryDelegate(clientProxy.replicationManagerServer.replicationCommands, &clientProxy.replicationManagerServer);
+						Delivery* delivery = clientProxy.deliveryManagerServer.writeSequenceNumber(RepPacket, *delegate);
+						
 
 						//writing the replication data
 						if (clientProxy.replicationManagerServer.replicationCommands.size() > 0) {
-							clientProxy.replicationManagerServer.write(RepPacket);
+							clientProxy.replicationManagerServer.write(RepPacket );
 						}
 						clientProxy.secondsSinceLastReplication = 0;
 						sendPacket(RepPacket, clientProxy.address);
@@ -471,18 +475,7 @@ void ModuleNetworkingServer::updateNetworkObject(GameObject * gameObject)
 	}
 }
 
-//////////////////////////////////////////////////////////////////////
-		// DeliveryDelegate virtual methods
-//////////////////////////////////////////////////////////////////////
-void ModuleNetworkingServer::onDeliverySuccess(DeliveryManager * deliveryManger)
-{
-	int i = 101;
-}
 
-void ModuleNetworkingServer::onDeliveryFailure(DeliveryManager * deliveryManger)
-{
-	int i = 101;
-}
 
 
 //////////////////////////////////////////////////////////////////////

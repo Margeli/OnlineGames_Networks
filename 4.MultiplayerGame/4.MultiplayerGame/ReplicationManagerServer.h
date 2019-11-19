@@ -21,6 +21,18 @@ class ReplicationManagerServer {
 
 		void write(OutputMemoryStream& packet);
 
+		void AppendLostCommands(std::unordered_map<uint32, ReplicationAction> *repCommands);
 		
 		std::unordered_map<uint32, ReplicationAction> replicationCommands;
+};
+
+class ReplicationDeliveryDelegate : public DeliveryDelegate {
+public:
+	ReplicationDeliveryDelegate(std::unordered_map<uint32, ReplicationAction> & repCommands, ReplicationManagerServer* server);
+
+	void onDeliverySuccess(DeliveryManager* deliveryManager) override;
+	void onDeliveryFailure(DeliveryManager* deliveryManager) override;
+
+	std::unordered_map<uint32, ReplicationAction> storedReplicationCommands;
+	ReplicationManagerServer* serverReplicationManager;
 };
