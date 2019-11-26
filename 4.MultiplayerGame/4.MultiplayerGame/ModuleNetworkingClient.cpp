@@ -300,8 +300,6 @@ void ModuleNetworkingClient::sendHelloPacket()
 
 LoginDeliveryDelegate::LoginDeliveryDelegate(const char* clientName, uint8 _spaceshipType, ModuleNetworkingClient* client)
 {
-	playerName = clientName;
-	spaceshipType = _spaceshipType;
 	networkingClient = client;
 
 }
