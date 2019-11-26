@@ -134,16 +134,22 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			//replication message containing the input sequence number
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
-			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
-				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
-			}
+			
 			//replication sequence number
 			if (deliveryManagerClient.processSequenceNumber(packet)) {
 				//if the replication sequence number is the correct
 
 				//reading the replication data
 				replicationManagerClient.read(packet);
-			}		
+			}	
+			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
+				InputController gamepad;
+				for (int i = 1; lastInputSequenceNum > lastInputSequenceNumberReceivedByServer; i++) {
+					inputControllerFromInputPacketData(inputData[i], gamepad);
+					lastInputSequenceNumberReceivedByServer++;
+				}
+				//lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+			}
 		}
 	}
 }
@@ -197,6 +203,7 @@ void ModuleNetworkingClient::onUpdate()
 			inputPacketData.horizontalAxis = Input.horizontalAxis;
 			inputPacketData.verticalAxis = Input.verticalAxis;
 			inputPacketData.buttonBits = packInputControllerButtons(Input);
+			
 
 			// Create packet (if there's input and the input delivery interval exceeded)
 			if (secondsSinceLastInputDelivery > inputDeliveryIntervalSeconds)
