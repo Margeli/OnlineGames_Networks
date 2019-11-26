@@ -109,6 +109,10 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 
 	ServerMessage message;
 	packet >> message;
+	if (message == ServerMessage::Ping) {
+		deliveryManagerClient.processAckdSequenceNumbers(packet);
+
+	}
 
 	if (state == ClientState::WaitingWelcome)
 	{
@@ -156,12 +160,7 @@ void ModuleNetworkingClient::onUpdate()
 	{
 		// Send the hello packet with player data
 
-		OutputMemoryStream stream;
-		stream << ClientMessage::Hello;
-		stream << playerName;
-		stream << spaceshipType;
-
-		sendPacket(stream, serverAddress);
+		sendHelloPacket();
 
 		state = ClientState::WaitingWelcome;
 	}
@@ -276,3 +275,37 @@ void ModuleNetworkingClient::sendPing()
 	secondsSinceLastPing = 0.0f;
 }
 
+void ModuleNetworkingClient::sendHelloPacket()
+{
+	OutputMemoryStream stream;
+	stream << ClientMessage::Hello;
+
+	LoginDeliveryDelegate* delegate = nullptr;
+	delegate = new LoginDeliveryDelegate(playerName.c_str(), spaceshipType, this);
+	deliveryManagerClient.writeSequenceNumber(stream, *delegate);
+
+	stream << playerName;
+	stream << spaceshipType;
+
+
+	sendPacket(stream, serverAddress);
+}
+
+LoginDeliveryDelegate::LoginDeliveryDelegate(const char* clientName, uint8 _spaceshipType, ModuleNetworkingClient* client)
+{
+	playerName = clientName;
+	spaceshipType = _spaceshipType;
+	networkingClient = client;
+
+}
+
+void LoginDeliveryDelegate::onDeliverySuccess(DeliveryManager * deliveryManager)
+{
+	//succesfully delivered login delivery
+	
+}
+
+void LoginDeliveryDelegate::onDeliveryFailure(DeliveryManager * deliveryManager)
+{
+	networkingClient->sendHelloPacket();
+}

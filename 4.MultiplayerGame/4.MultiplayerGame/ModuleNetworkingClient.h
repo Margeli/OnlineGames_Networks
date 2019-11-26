@@ -14,6 +14,8 @@ public:
 
 	void setPlayerInfo(const char *playerName, uint8 spaceshipType);
 
+	void sendHelloPacket();
+
 
 
 private:
@@ -82,5 +84,20 @@ private:
 
 	double lastPacketReceivedTime = 0.0f; // NOTE(jesus): Use this to implement client timeout
 	float secondsSinceLastPing = 0.0f;    // NOTE(jesus): Use this to implement ping to server
+
+
 };
 
+class LoginDeliveryDelegate : public DeliveryDelegate {
+public:
+
+	
+	ModuleNetworkingClient* networkingClient = nullptr;
+
+	LoginDeliveryDelegate(const char * clientName, uint8 spaceshipType, ModuleNetworkingClient* client);
+
+	void onDeliverySuccess(DeliveryManager* deliveryManager) override;
+	void onDeliveryFailure(DeliveryManager* deliveryManager) override;
+
+
+};

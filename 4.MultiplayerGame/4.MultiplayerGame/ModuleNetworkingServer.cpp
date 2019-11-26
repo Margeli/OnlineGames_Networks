@@ -106,42 +106,44 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 				proxy = createClientProxy();
 
 				newClient = true;
+				//process the sequence number to the hello message delivery
+				if (proxy->deliveryManagerServer.processSequenceNumber(packet)) {
+					std::string playerName;
+					uint8 spaceshipType;
+					packet >> playerName;
+					packet >> spaceshipType;
 
-				std::string playerName;
-				uint8 spaceshipType;
-				packet >> playerName;
-				packet >> spaceshipType;
+					proxy->address.sin_family = fromAddress.sin_family;
+					proxy->address.sin_addr.S_un.S_addr = fromAddress.sin_addr.S_un.S_addr;
+					proxy->address.sin_port = fromAddress.sin_port;
+					proxy->connected = true;
+					proxy->name = playerName;
+					proxy->clientId = nextClientId++;
 
-				proxy->address.sin_family = fromAddress.sin_family;
-				proxy->address.sin_addr.S_un.S_addr = fromAddress.sin_addr.S_un.S_addr;
-				proxy->address.sin_port = fromAddress.sin_port;
-				proxy->connected = true;
-				proxy->name = playerName;
-				proxy->clientId = nextClientId++;
+					// Create new network object
+					spawnPlayer(*proxy, spaceshipType);
 
-				// Create new network object
-				spawnPlayer(*proxy, spaceshipType);
+					// Send welcome to the new player
+					OutputMemoryStream welcomePacket;
+					welcomePacket << ServerMessage::Welcome;
+					welcomePacket << proxy->clientId;
+					welcomePacket << proxy->gameObject->networkId;
+					sendPacket(welcomePacket, fromAddress);
 
-				// Send welcome to the new player
-				OutputMemoryStream welcomePacket;
-				welcomePacket << ServerMessage::Welcome;
-				welcomePacket << proxy->clientId;
-				welcomePacket << proxy->gameObject->networkId;
-				sendPacket(welcomePacket, fromAddress);
+					// Send all network objects to the new player
+					uint16 networkGameObjectsCount;
+					GameObject *networkGameObjects[MAX_NETWORK_OBJECTS];
+					App->modLinkingContext->getNetworkGameObjects(networkGameObjects, &networkGameObjectsCount);
+					for (uint16 i = 0; i < networkGameObjectsCount; ++i)
+					{
+						GameObject *gameObject = networkGameObjects[i];
 
-				// Send all network objects to the new player
-				uint16 networkGameObjectsCount;
-				GameObject *networkGameObjects[MAX_NETWORK_OBJECTS];
-				App->modLinkingContext->getNetworkGameObjects(networkGameObjects, &networkGameObjectsCount);
-				for (uint16 i = 0; i < networkGameObjectsCount; ++i)
-				{
-					GameObject *gameObject = networkGameObjects[i];
+						// TO_DO(jesus): Notify the new client proxy's replication manager about the creation of this game object
+						proxy->replicationManagerServer.create(gameObject->networkId);
+					}
 
-					// TO_DO(jesus): Notify the new client proxy's replication manager about the creation of this game object
-					proxy->replicationManagerServer.create(gameObject->networkId);
+					LOG("Message received: hello - from player %s", playerName.c_str());
 				}
-
-				LOG("Message received: hello - from player %s", playerName.c_str());
 			}
 
 			if (!newClient)
@@ -226,7 +228,12 @@ void ModuleNetworkingServer::onUpdate()
 				if (sendPing) { //server PING to every client
 					OutputMemoryStream pingPacket;
 					pingPacket << ServerMessage::Ping;
+					if (clientProxy.deliveryManagerServer.hasSequenceNumberPendingAck()) {
+						clientProxy.deliveryManagerServer.writeSequenceNumbersPendingAck(pingPacket);//sending sequence number Ack in the ping packet
+
+					}
 					sendPacket(pingPacket, clientProxy.address);
+
 				}
 				///////////////////////////////////////-PING
 
@@ -248,7 +255,7 @@ void ModuleNetworkingServer::onUpdate()
 						ReplicationDeliveryDelegate* delegate = nullptr;
 						if (clientProxy.replicationManagerServer.replicationCommands.size() > 0)
 							delegate = new ReplicationDeliveryDelegate(clientProxy.replicationManagerServer.replicationCommands, &clientProxy.replicationManagerServer);
-						Delivery* delivery = clientProxy.deliveryManagerServer.writeSequenceNumber(RepPacket, *delegate);
+						clientProxy.deliveryManagerServer.writeSequenceNumber(RepPacket, *delegate);
 						
 
 						//writing the replication data
@@ -260,6 +267,8 @@ void ModuleNetworkingServer::onUpdate()
 				}
 				///////////////////////////////////////-REPLICATION
 
+
+				
 
 				///////////////////////////////////////DELIVERY ACKNOWLEDGEMENT
 				
