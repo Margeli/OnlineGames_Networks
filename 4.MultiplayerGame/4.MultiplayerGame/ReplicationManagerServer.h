@@ -34,5 +34,5 @@ public:
 	void onDeliveryFailure(DeliveryManager* deliveryManager) override;
 
 	std::unordered_map<uint32, ReplicationAction> storedReplicationCommands;
-	ReplicationManagerServer* serverReplicationManager;
+	ReplicationManagerServer* serverReplicationManager = nullptr;
 };
