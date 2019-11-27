@@ -145,7 +145,8 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 
 				//reading the replication data
 				replicationManagerClient.read(packet);
-			}	
+			}
+			//SERVER RECONCILIATION WIP----------------------------------------------------------------------------------------------------
 			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
 				InputController gamepad;
 				for (int i = 1; lastInputSequenceNum > lastInputSequenceNumberReceivedByServer; i++) {
@@ -182,6 +183,15 @@ void ModuleNetworkingClient::onUpdate()
 			disconnect();
 		}
 		////////////////////////////////////////////-TIMEOUT
+
+		//////////////////////////////////////////CLIENT PREDICTION
+		GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
+		if (playerClientGameObject != nullptr)
+		{
+			//playerClientGameObject->behaviour->onInput(Input);
+		}
+		//////////////////////////////////////////-CLIENT PREDICTION
+
 
 		/////////////////////////////////////////PING
 		secondsSinceLastPing += Time.deltaTime;
