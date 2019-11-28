@@ -389,8 +389,17 @@ GameObject * ModuleNetworkingServer::spawnPlayer(ClientProxy &clientProxy, uint8
 	else if (spaceshipType == 1) {
 		clientProxy.gameObject->texture = App->modResources->spacecraft2;
 	}
-	else {
+	else if (spaceshipType == 2) {
 		clientProxy.gameObject->texture = App->modResources->spacecraft3;
+	}
+	else if (spaceshipType == 3) {
+		clientProxy.gameObject->texture = App->modResources->spacecraft4;
+	}
+	else if (spaceshipType == 4) {
+		clientProxy.gameObject->texture = App->modResources->spacecraft5;
+	}
+	else {
+		clientProxy.gameObject->texture = App->modResources->spacecraft6;
 	}
 
 	// Create collider

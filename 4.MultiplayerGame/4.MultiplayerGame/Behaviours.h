@@ -18,29 +18,37 @@ struct Spaceship : public Behaviour
 	void start() override
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
+		gameObject->angle = -90.f;
+		gameObject->size = { 85.f, 50.f };
 	}
 
 	void onInput(const InputController &input) override
 	{
-		if (input.horizontalAxis != 0.0f)
-		{
-			const float rotateSpeed = 180.0f;
-			gameObject->angle += input.horizontalAxis * rotateSpeed * Time.deltaTime;
-			NetworkUpdate(gameObject);
-		}
+		//if (input.horizontalAxis != 0.0f) //Letter A
+		//{
+		//	const float rotateSpeed = 180.0f;
+		//	gameObject->angle += input.horizontalAxis * rotateSpeed * Time.deltaTime;
+		//	NetworkUpdate(gameObject);
+		//}
 
 		if (input.actionDown == ButtonState::Pressed)
 		{
 			const float advanceSpeed = 200.0f;
-			gameObject->position += vec2FromDegrees(gameObject->angle) * advanceSpeed * Time.deltaTime;
+			gameObject->position.y += advanceSpeed * Time.deltaTime;
+			NetworkUpdate(gameObject);
+		}
+		if (input.actionUp == ButtonState::Pressed)
+		{
+			const float advanceSpeed = 200.0f;
+			gameObject->position.y -= advanceSpeed * Time.deltaTime;
 			NetworkUpdate(gameObject);
 		}
 
-		if (input.actionLeft == ButtonState::Press)
+		/*if (input.actionLeft == ButtonState::Press)
 		{
 			GameObject * laser = App->modNetServer->spawnBullet(gameObject);
 			laser->tag = gameObject->tag;
-		}
+		}*/
 	}
 
 	void onCollisionTriggered(Collider &c1, Collider &c2) override

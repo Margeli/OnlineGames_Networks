@@ -1,10 +1,10 @@
 #include "Networks.h"
 #include "ReplicationManagerClient.h"
 
-void ReplicationManagerClient::read(const InputMemoryStream & packet)
+void ReplicationManagerClient::read(const InputMemoryStream & packet, uint32 clientID)
 {
+	uint32 networkID;
 	while (packet.RemainingByteCount() > 0) {
-		uint32 networkID;
 		packet >> networkID;
 		int actionId = 0;
 		packet >> actionId;
@@ -53,6 +53,13 @@ void ReplicationManagerClient::read(const InputMemoryStream & packet)
 	for (auto &it : packetsToCrate) {
 		GameObject* g = Instantiate();
 		App->modLinkingContext->registerNetworkGameObjectWithNetworkId(g, it.networkID);
+	
+		if (networkID == clientID)
+		{
+			Spaceship* behavior = new Spaceship();
+			behavior->gameObject = g;
+			g->behaviour = behavior;
+		}
 		g->position = it.position;
 		g->angle = it.angle;
 		g->size = it.size;

@@ -19,7 +19,7 @@ public:
 		uint32 networkID;
 	};
 
-	void read(const InputMemoryStream &packet);
+	void read(const InputMemoryStream &packet, uint32 clientID);
 
 	std::vector<CreatePacket> packetsToCrate;
 	std::vector<UpdatePacket> packetsToUpdate;
