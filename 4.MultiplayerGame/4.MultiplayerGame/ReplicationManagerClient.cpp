@@ -57,6 +57,7 @@ void ReplicationManagerClient::read(const InputMemoryStream & packet, uint32 cli
 		if (networkID == clientID)
 		{
 			Spaceship* behavior = new Spaceship();
+			behavior->isServer = false;
 			behavior->gameObject = g;
 			g->behaviour = behavior;
 		}

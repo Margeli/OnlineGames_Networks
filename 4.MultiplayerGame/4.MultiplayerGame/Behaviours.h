@@ -4,6 +4,8 @@ struct Behaviour
 {
 	GameObject *gameObject = nullptr;
 
+	bool isServer = true;
+
 	virtual void start() { }
 
 	virtual void update() { }
@@ -35,13 +37,15 @@ struct Spaceship : public Behaviour
 		{
 			const float advanceSpeed = 200.0f;
 			gameObject->position.y += advanceSpeed * Time.deltaTime;
-			NetworkUpdate(gameObject);
+			if (isServer)
+				NetworkUpdate(gameObject);
 		}
 		if (input.actionUp == ButtonState::Pressed)
 		{
 			const float advanceSpeed = 200.0f;
 			gameObject->position.y -= advanceSpeed * Time.deltaTime;
-			NetworkUpdate(gameObject);
+			if (isServer)
+				NetworkUpdate(gameObject);
 		}
 
 		/*if (input.actionLeft == ButtonState::Press)
@@ -76,7 +80,8 @@ struct Laser : public Behaviour
 
 		secondsSinceCreation += Time.deltaTime;
 
-		NetworkUpdate(gameObject);
+		if (isServer)
+			NetworkUpdate(gameObject);
 
 		const float lifetimeSeconds = 2.0f;
 		if (secondsSinceCreation > lifetimeSeconds) NetworkDestroy(gameObject);

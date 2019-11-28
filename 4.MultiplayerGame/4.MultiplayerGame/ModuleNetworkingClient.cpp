@@ -191,7 +191,7 @@ void ModuleNetworkingClient::onUpdate()
 		GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
 		if (playerClientGameObject != nullptr)
 		{
-			//playerClientGameObject->behaviour->onInput(Input);---------------------------------------------TO CHECK!!!
+			playerClientGameObject->behaviour->onInput(Input);
 		}
 		//////////////////////////////////////////-CLIENT PREDICTION
 
