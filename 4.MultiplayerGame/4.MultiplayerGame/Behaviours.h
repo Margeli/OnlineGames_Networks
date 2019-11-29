@@ -23,19 +23,11 @@ struct Spaceship : public Behaviour
 	void start() override
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
-		gameObject->angle = -90.f;
-		gameObject->size = { 85.f, 50.f };
+		gameObject->angle = 90.f;
 	}
 
 	void onInput(const InputController &input) override
 	{
-		//if (input.horizontalAxis != 0.0f) //Letter A
-		//{
-		//	const float rotateSpeed = 180.0f;
-		//	gameObject->angle += input.horizontalAxis * rotateSpeed * Time.deltaTime;
-		//	NetworkUpdate(gameObject);
-		//}
-
 		if (input.actionDown == ButtonState::Pressed)
 		{
 			if (gameObject->position.y <verticalLimit) {
