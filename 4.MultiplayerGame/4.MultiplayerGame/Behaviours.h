@@ -17,6 +17,9 @@ struct Behaviour
 
 struct Spaceship : public Behaviour
 {
+	float horizontalLimit = 20.0f; 
+	float verticalLimit = 500.0f;
+
 	void start() override
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
@@ -35,19 +38,41 @@ struct Spaceship : public Behaviour
 
 		if (input.actionDown == ButtonState::Pressed)
 		{
-			const float advanceSpeed = 200.0f;
-			gameObject->position.y += advanceSpeed * Time.deltaTime;
-			if (isServer)
-				NetworkUpdate(gameObject);
+			if (gameObject->position.y <verticalLimit) {
+				const float advanceSpeed = 200.0f;
+				gameObject->position.y += advanceSpeed * Time.deltaTime;
+				if (isServer)
+					NetworkUpdate(gameObject);
+			}
 		}
 		if (input.actionUp == ButtonState::Pressed)
 		{
-			const float advanceSpeed = 200.0f;
-			gameObject->position.y -= advanceSpeed * Time.deltaTime;
+			if (gameObject->position.y > -verticalLimit) {
+				const float advanceSpeed = 200.0f;
+				gameObject->position.y -= advanceSpeed * Time.deltaTime;
+				if (isServer)
+					NetworkUpdate(gameObject);
+			}
+		}
+		if (input.actionLeft == ButtonState::Pressed) {
+			
+			if (gameObject->position.x > -horizontalLimit) {
+				const float advanceSpeed = 100.0f;
+				gameObject->position.x -= advanceSpeed * Time.deltaTime;
+			}			
 			if (isServer)
 				NetworkUpdate(gameObject);
 		}
+		if (input.actionRight == ButtonState::Pressed) {
+			if (gameObject->position.x < horizontalLimit) {
+				const float advanceSpeed = 100.0f;
+				gameObject->position.x += advanceSpeed * Time.deltaTime;
+			}
 
+			if (isServer)
+				NetworkUpdate(gameObject);
+		}
+		
 		/*if (input.actionLeft == ButtonState::Press)
 		{
 			GameObject * laser = App->modNetServer->spawnBullet(gameObject);
@@ -67,6 +92,7 @@ struct Spaceship : public Behaviour
 			// instead, make the gameObject invisible or disconnect the client.
 		}
 	}
+
 };
 
 struct Laser : public Behaviour
