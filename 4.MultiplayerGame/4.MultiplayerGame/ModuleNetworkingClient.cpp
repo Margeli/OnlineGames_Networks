@@ -83,11 +83,14 @@ void ModuleNetworkingClient::onGui()
 			ImGui::Text(" - Network id: %u", networkId);
 
 			vec2 playerPosition = {};
+			float angle = 0;
 			GameObject *playerGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
 			if (playerGameObject != nullptr) {
 				playerPosition = playerGameObject->position;
+				angle = playerGameObject->angle;
 			}
 			ImGui::Text(" - Coordinates: (%f, %f)", playerPosition.x, playerPosition.y);
+			ImGui::Text(" - Angle: %f", angle);//DELETE-------------------------
 
 			ImGui::Separator();
 
@@ -139,21 +142,18 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
 			
+			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
+				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+			}
+
 			//replication sequence number
 			if (deliveryManagerClient.processSequenceNumber(packet)) {
 				//if the replication sequence number is the correct
 
 				//reading the replication data
-				replicationManagerClient.read(packet);
-			}	
-			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
-				InputController gamepad;
-				for (int i = 1; lastInputSequenceNum > lastInputSequenceNumberReceivedByServer; i++) {
-					inputControllerFromInputPacketData(inputData[i], gamepad);
-					lastInputSequenceNumberReceivedByServer++;
-				}
-				//lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+				replicationManagerClient.read(packet, networkId);
 			}
+			lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
 		}
 	}
 }
@@ -182,6 +182,15 @@ void ModuleNetworkingClient::onUpdate()
 			disconnect();
 		}
 		////////////////////////////////////////////-TIMEOUT
+
+		//////////////////////////////////////////CLIENT PREDICTION
+		GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
+		if (playerClientGameObject != nullptr)
+		{
+			playerClientGameObject->behaviour->onInput(Input);
+		}
+		//////////////////////////////////////////-CLIENT PREDICTION
+
 
 		/////////////////////////////////////////PING
 		secondsSinceLastPing += Time.deltaTime;

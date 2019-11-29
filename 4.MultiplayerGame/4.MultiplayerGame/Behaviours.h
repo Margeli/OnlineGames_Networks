@@ -4,6 +4,8 @@ struct Behaviour
 {
 	GameObject *gameObject = nullptr;
 
+	bool isServer = true;
+
 	virtual void start() { }
 
 	virtual void update() { }
@@ -15,32 +17,67 @@ struct Behaviour
 
 struct Spaceship : public Behaviour
 {
+	float horizontalLimit = 20.0f; 
+	float verticalLimit = 500.0f;
+
 	void start() override
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
+		gameObject->angle = -90.f;
+		gameObject->size = { 85.f, 50.f };
 	}
 
 	void onInput(const InputController &input) override
 	{
-		if (input.horizontalAxis != 0.0f)
-		{
-			const float rotateSpeed = 180.0f;
-			gameObject->angle += input.horizontalAxis * rotateSpeed * Time.deltaTime;
-			NetworkUpdate(gameObject);
-		}
+		//if (input.horizontalAxis != 0.0f) //Letter A
+		//{
+		//	const float rotateSpeed = 180.0f;
+		//	gameObject->angle += input.horizontalAxis * rotateSpeed * Time.deltaTime;
+		//	NetworkUpdate(gameObject);
+		//}
 
 		if (input.actionDown == ButtonState::Pressed)
 		{
-			const float advanceSpeed = 200.0f;
-			gameObject->position += vec2FromDegrees(gameObject->angle) * advanceSpeed * Time.deltaTime;
-			NetworkUpdate(gameObject);
+			if (gameObject->position.y <verticalLimit) {
+				const float advanceSpeed = 200.0f;
+				gameObject->position.y += advanceSpeed * Time.deltaTime;
+				if (isServer)
+					NetworkUpdate(gameObject);
+			}
 		}
+		if (input.actionUp == ButtonState::Pressed)
+		{
+			if (gameObject->position.y > -verticalLimit) {
+				const float advanceSpeed = 200.0f;
+				gameObject->position.y -= advanceSpeed * Time.deltaTime;
+				if (isServer)
+					NetworkUpdate(gameObject);
+			}
+		}
+		if (input.actionLeft == ButtonState::Pressed) {
+			
+			if (gameObject->position.x > -horizontalLimit) {
+				const float advanceSpeed = 100.0f;
+				gameObject->position.x -= advanceSpeed * Time.deltaTime;
+			}			
+			if (isServer)
+				NetworkUpdate(gameObject);
+		}
+		if (input.actionRight == ButtonState::Pressed) {
+			if (gameObject->position.x < horizontalLimit) {
+				const float advanceSpeed = 100.0f;
+				gameObject->position.x += advanceSpeed * Time.deltaTime;
+			}
 
-		if (input.actionLeft == ButtonState::Press)
+			if (isServer)
+				NetworkUpdate(gameObject);
+		}
+		
+		/*if (input.actionLeft == ButtonState::Press)
 		{
 			GameObject * laser = App->modNetServer->spawnBullet(gameObject);
 			laser->tag = gameObject->tag;
-		}
+		}*/
 	}
 
 	void onCollisionTriggered(Collider &c1, Collider &c2) override
@@ -55,6 +92,7 @@ struct Spaceship : public Behaviour
 			// instead, make the gameObject invisible or disconnect the client.
 		}
 	}
+
 };
 
 struct Laser : public Behaviour
@@ -68,7 +106,8 @@ struct Laser : public Behaviour
 
 		secondsSinceCreation += Time.deltaTime;
 
-		NetworkUpdate(gameObject);
+		if (isServer)
+			NetworkUpdate(gameObject);
 
 		const float lifetimeSeconds = 2.0f;
 		if (secondsSinceCreation > lifetimeSeconds) NetworkDestroy(gameObject);

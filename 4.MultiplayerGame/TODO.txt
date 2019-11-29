@@ -1,1 +1,0 @@
-Delegate object need to store the replication commands if in failure case resend it
