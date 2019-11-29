@@ -24,6 +24,7 @@ struct Spaceship : public Behaviour
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
 		gameObject->angle = 90.f;
+		gameObject->position.x =- 750.f;;
 	}
 
 	void onInput(const InputController &input) override
