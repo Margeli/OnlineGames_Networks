@@ -142,6 +142,10 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
 			
+			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
+				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+			}
+
 			//replication sequence number
 			if (deliveryManagerClient.processSequenceNumber(packet)) {
 				//if the replication sequence number is the correct
@@ -149,15 +153,7 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 				//reading the replication data
 				replicationManagerClient.read(packet, networkId);
 			}
-			//SERVER RECONCILIATION WIP----------------------------------------------------------------------------------------------------
-			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
-				InputController gamepad;
-				for (int i = 1; lastInputSequenceNum > lastInputSequenceNumberReceivedByServer; i++) {
-					inputControllerFromInputPacketData(inputData[i], gamepad);
-					lastInputSequenceNumberReceivedByServer++;
-				}
-				//lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
-			}
+			lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
 		}
 	}
 }
