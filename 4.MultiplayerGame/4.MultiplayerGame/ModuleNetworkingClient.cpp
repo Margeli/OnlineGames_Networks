@@ -102,6 +102,8 @@ void ModuleNetworkingClient::onGui()
 
 			ImGui::Text("Input:");
 			ImGui::InputFloat("Delivery interval (s)", &inputDeliveryIntervalSeconds, 0.01f, 0.1f, 4);
+
+			ImGui::Separator();
 		}
 	}
 }
@@ -141,10 +143,6 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			//replication message containing the input sequence number
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
-			
-			if (lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
-				lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
-			}
 
 			//replication sequence number
 			if (deliveryManagerClient.processSequenceNumber(packet)) {
@@ -153,7 +151,23 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 				//reading the replication data
 				replicationManagerClient.read(packet, networkId);
 			}
-			lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+
+			//lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+
+
+			//////////////////////////////////////////RECONCILITATION
+				GameObject* playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
+				if (playerClientGameObject && lastInputSequenceNum > lastInputSequenceNumberReceivedByServer) {
+					InputController inputForServer;
+					for (uint32 i = lastInputSequenceNumberReceivedByServer; i < lastInputSequenceNum; ++i)
+					{
+						InputPacketData &inputPacketData = inputData[i % ArrayCount(inputData)];
+						inputControllerFromInputPacketData(inputPacketData, inputForServer);
+						playerClientGameObject->behaviour->onInput(inputForServer);
+					}
+					lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
+				}
+			//////////////////////////////////////////-RECONCILIATION
 		}
 	}
 }
@@ -184,11 +198,11 @@ void ModuleNetworkingClient::onUpdate()
 		////////////////////////////////////////////-TIMEOUT
 
 		//////////////////////////////////////////CLIENT PREDICTION
-		GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
-		if (playerClientGameObject != nullptr)
-		{
-			playerClientGameObject->behaviour->onInput(Input);
-		}
+			GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
+			if (playerClientGameObject != nullptr)
+			{
+				playerClientGameObject->behaviour->onInput(Input);
+			}
 		//////////////////////////////////////////-CLIENT PREDICTION
 
 
