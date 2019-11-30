@@ -79,7 +79,8 @@ enum class ColliderType
 {
 	None,
 	Player,
-	Laser
+	Laser, 
+	Asteroid
 };
 
 
@@ -212,6 +213,13 @@ public:
 		float result = (float)((z1 ^ z2 ^ z3 ^ z4) * 2.3283064365386963e-10);
 		ASSERT(result >= 0.0f && result <= 1.0f);
 		return result;
+	}
+
+	float randomFloat(float min, float max) {
+		float random = ((float)rand()) / (float)RAND_MAX;
+		float diff = max - min;
+		float r = random * diff;
+		return min + r;
 	}
 
 private:

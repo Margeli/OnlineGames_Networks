@@ -66,7 +66,6 @@ void DeliveryManager::processAckdSequenceNumbers(const InputMemoryStream & packe
 			int i = 101;
 		}
 	}
-	int i = 101;
 }
 
 void DeliveryManager::processTimedOutPackets()

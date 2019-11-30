@@ -39,7 +39,7 @@ public:
 
 	void clear();
 
-	void resendLostDelivery(Delivery* del);
+	int countPendingDeliveries()const { return pendingDeliveries.size(); }
 
 private:
 	

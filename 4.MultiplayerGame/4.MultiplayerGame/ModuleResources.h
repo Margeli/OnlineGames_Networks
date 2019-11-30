@@ -10,8 +10,7 @@ public:
 
 	Texture *background = nullptr;
 	Texture *space = nullptr;
-	Texture *asteroid1 = nullptr;
-	Texture *asteroid2 = nullptr;
+	Texture *asteroid = nullptr;
 	Texture *spacecraft1 = nullptr;
 	Texture *spacecraft2 = nullptr;
 	Texture *spacecraft3 = nullptr;

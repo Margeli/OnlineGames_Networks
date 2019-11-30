@@ -74,7 +74,9 @@ void ModuleNetworkingServer::onGui()
 					ImGui::Text(" - name: %s", clientProxies[i].name.c_str());
 					ImGui::Text(" - id: %d", clientProxies[i].clientId);
 					ImGui::Text(" - Last packet time: %.04f", clientProxies[i].lastPacketReceivedTime);
-					ImGui::Text(" - Seconds since repl.: %.04f", clientProxies[i].secondsSinceLastReplication);
+					ImGui::Text(" - Seconds since repl.: %.04f", clientProxies[i].secondsSinceLastReplication); 
+					ImGui::Text("Pending Deliveries to Ack: %i", clientProxies[i].deliveryManagerServer.countPendingDeliveries());
+
 					
 					ImGui::Separator();
 				}
@@ -190,6 +192,10 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 
 			proxy->deliveryManagerServer.processAckdSequenceNumbers(packet);
 		}
+		else if (message == ClientMessage::ReadyToPlay) {
+			proxy->readyToPlay = true;
+			proxy->deliveryManagerServer.processSequenceNumber(packet);
+		}
 
 		if (proxy != nullptr)
 		{
@@ -202,6 +208,14 @@ void ModuleNetworkingServer::onUpdate()
 {
 	if (state == ServerState::Listening)
 	{
+
+		//if(!gameStarted&& CheckAllPlayersReady())
+		//REMOVE
+		gameStarted = true;
+		if (gameStarted) {
+			//InGameUpdate();
+		}
+
 		bool sendPing = false;
 		secondsSinceLastPing += Time.deltaTime;
 		if (secondsSinceLastPing > PING_INTERVAL_SECONDS) {
@@ -331,6 +345,32 @@ void ModuleNetworkingServer::onDisconnect()
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// Game logic
+//////////////////////////////////////////////////////////////////////
+
+void ModuleNetworkingServer::InGameUpdate()
+{
+	currAsteroidsSpawnTime += Time.deltaTime;
+	if (currAsteroidsSpawnTime > asteroidsSpawnTime) {
+		currAsteroidsSpawnTime = 0.0f;
+		spawnAsteroid();
+	}
+}
+
+bool ModuleNetworkingServer::CheckAllPlayersReady()
+{
+	bool ret = false;
+	bool ready = true;
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clientProxies[i].connected) {
+			ready &= clientProxies[i].readyToPlay;
+		}
+	}
+	return ret & ready;
+}
+
+
 
 //////////////////////////////////////////////////////////////////////
 // Client proxies
@@ -454,6 +494,41 @@ GameObject * ModuleNetworkingServer::spawnBullet(GameObject *parent)
 	}
 
 	return gameObject;
+}
+
+GameObject * ModuleNetworkingServer::spawnAsteroid()
+{
+	GameObject* g = Instantiate();
+
+	//random size
+	float size = Random.randomFloat(50, 100);
+	g->size = { size, size };
+
+	//random initial pos
+	g->position = { Random.randomFloat(440,490), Random.randomFloat(-350, 350) };
+	g->texture =App->modResources->asteroid;
+	g->collider = App->modCollision->addCollider(ColliderType::Asteroid, g);
+
+	g->behaviour = new Asteroid;
+	g->behaviour->gameObject = g;
+	
+
+	//every GAME_ASTEROIDS_DIFFICULTY_RATIO seconds (20s) the new asteroids speed is doubled
+	Asteroid* beh = (Asteroid*)g->behaviour;
+	beh->speed = Random.randomFloat(75, 125) * Time.time / GAME_ASTEROIDS_DIFFICULTY_RATIO ;
+
+
+	App->modLinkingContext->registerNetworkGameObject(g);
+
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if (clientProxies[i].connected)
+		{
+			clientProxies[i].replicationManagerServer.create(g->networkId);
+		}
+	}
+
+	return g;
 }
 
 

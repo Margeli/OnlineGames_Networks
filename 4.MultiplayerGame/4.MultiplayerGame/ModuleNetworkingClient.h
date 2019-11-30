@@ -66,8 +66,13 @@ private:
 	ReplicationManagerClient replicationManagerClient;
 	DeliveryManager deliveryManagerClient;
 
-	// Input ///////////
+public:
+	bool readyToPlay = false;
+	bool sendReadyPacket = false;
 
+
+	// Input ///////////
+private:
 	static const int MAX_INPUT_DATA_SIMULTANEOUS_PACKETS = 64;
 
 	// Queue of input data
@@ -88,15 +93,30 @@ private:
 };
 
 class LoginDeliveryDelegate : public DeliveryDelegate {
-public:
 
-	
+public:		
 	ModuleNetworkingClient* networkingClient = nullptr;
 
-	LoginDeliveryDelegate(const char * clientName, uint8 spaceshipType, ModuleNetworkingClient* client);
+	LoginDeliveryDelegate(ModuleNetworkingClient* client) :networkingClient(client) {}
 
 	void onDeliverySuccess(DeliveryManager* deliveryManager) override;
 	void onDeliveryFailure(DeliveryManager* deliveryManager) override;
 
 
 };
+
+class ReadyToPlayDeliveryDelegate : public DeliveryDelegate {
+
+public:
+
+	ModuleNetworkingClient* networkingClient = nullptr;
+
+	ReadyToPlayDeliveryDelegate(ModuleNetworkingClient* client) :networkingClient(client) {}
+
+
+	void onDeliverySuccess(DeliveryManager* deliveryManager) override;
+	void onDeliveryFailure(DeliveryManager* deliveryManager) override;
+
+
+};
+

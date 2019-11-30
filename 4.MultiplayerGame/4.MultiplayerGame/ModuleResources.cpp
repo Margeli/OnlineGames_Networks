@@ -23,8 +23,7 @@ bool ModuleResources::init()
 
 #if !defined(USE_TASK_MANAGER)
 	space = App->modTextures->loadTexture("space.png");
-	asteroid1 = App->modTextures->loadTexture("asteroid1.png");
-	asteroid2 = App->modTextures->loadTexture("asteroid2.png");
+	asteroid = App->modTextures->loadTexture("asteroid.png");
 	spacecraft1 = App->modTextures->loadTexture("spRed.png");
 	spacecraft2 = App->modTextures->loadTexture("spOrange.png");
 	spacecraft3 = App->modTextures->loadTexture("spYellow.png");
@@ -35,8 +34,7 @@ bool ModuleResources::init()
 	completionRatio = 1.0f;
 #else
 	loadTextureAsync("space.png", &space);
-	loadTextureAsync("asteroid1.png",        &asteroid1);
-	loadTextureAsync("asteroid2.png",        &asteroid2);
+	loadTextureAsync("asteroid.png",        &asteroid);
 	loadTextureAsync("spRed.png",      &spacecraft1);
 	loadTextureAsync("spOrange.png",      &spacecraft2);
 	loadTextureAsync("spYellow.png",      &spacecraft3);

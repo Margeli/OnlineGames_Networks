@@ -97,13 +97,21 @@ void ModuleNetworkingClient::onGui()
 			ImGui::Text("Connection checking info:");
 			ImGui::Text(" - Ping interval (s): %f", PING_INTERVAL_SECONDS);
 			ImGui::Text(" - Disconnection timeout (s): %f", DISCONNECT_TIMEOUT_SECONDS);
-
+			ImGui::Text("Pending Deliveries to Ack: %i", deliveryManagerClient.countPendingDeliveries());
 			ImGui::Separator();
 
 			ImGui::Text("Input:");
 			ImGui::InputFloat("Delivery interval (s)", &inputDeliveryIntervalSeconds, 0.01f, 0.1f, 4);
 
 			ImGui::Separator();
+			if (!readyToPlay) {
+				if (ImGui::Button("Start Game", {  ImGui::GetWindowWidth(),20 })) {
+					sendReadyPacket = true;
+				}
+			}
+			else {
+				ImGui::Text("Ready to play");
+			}
 		}
 	}
 }
@@ -189,6 +197,20 @@ void ModuleNetworkingClient::onUpdate()
 	}
 	else if (state == ClientState::Playing)
 	{
+		//////////////////////////////////////////READY TO PLAY MSG
+		if (sendReadyPacket) {
+			OutputMemoryStream packet;
+			packet << ClientMessage::ReadyToPlay;
+
+			ReadyToPlayDeliveryDelegate* delegate = nullptr;
+			delegate = new ReadyToPlayDeliveryDelegate(this);
+			deliveryManagerClient.writeSequenceNumber(packet, *delegate);
+			
+			sendPacket(packet, serverAddress);
+			sendReadyPacket = false;
+		}
+		//////////////////////////////////////////-READY TO PLAY MSG
+
 		//////////////////////////////////////////TIMEOUT
 		if (Time.time - lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 			ELOG("client connection timeout with the server.");
@@ -311,7 +333,7 @@ void ModuleNetworkingClient::sendHelloPacket()
 	stream << ClientMessage::Hello;
 
 	LoginDeliveryDelegate* delegate = nullptr;
-	delegate = new LoginDeliveryDelegate(playerName.c_str(), spaceshipType, this);
+	delegate = new LoginDeliveryDelegate(this);
 	deliveryManagerClient.writeSequenceNumber(stream, *delegate);
 
 	stream << playerName;
@@ -319,12 +341,6 @@ void ModuleNetworkingClient::sendHelloPacket()
 
 
 	sendPacket(stream, serverAddress);
-}
-
-LoginDeliveryDelegate::LoginDeliveryDelegate(const char* clientName, uint8 _spaceshipType, ModuleNetworkingClient* client)
-{
-	networkingClient = client;
-
 }
 
 void LoginDeliveryDelegate::onDeliverySuccess(DeliveryManager * deliveryManager)
@@ -336,4 +352,14 @@ void LoginDeliveryDelegate::onDeliverySuccess(DeliveryManager * deliveryManager)
 void LoginDeliveryDelegate::onDeliveryFailure(DeliveryManager * deliveryManager)
 {
 	networkingClient->sendHelloPacket();
+}
+
+void ReadyToPlayDeliveryDelegate::onDeliverySuccess(DeliveryManager * deliveryManager)
+{
+	networkingClient->readyToPlay = true;
+}
+
+void ReadyToPlayDeliveryDelegate::onDeliveryFailure(DeliveryManager * deliveryManager)
+{
+	networkingClient->sendReadyPacket = true;
 }

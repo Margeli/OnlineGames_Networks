@@ -2,6 +2,9 @@
 
 #include "ModuleNetworking.h"
 
+#define GAME_ASTEROIDS_MAX_TIME_SPAWN 3.0f
+#define GAME_ASTEROIDS_DIFFICULTY_RATIO 20
+
 class ModuleNetworkingServer : public ModuleNetworking
 {
 public:
@@ -35,7 +38,18 @@ private:
 
 	void onDisconnect() override;
 
+	//////////////////////////////////////////////////////////////////////
+	// Game 
+	//////////////////////////////////////////////////////////////////////
 
+	void InGameUpdate();
+
+	bool gameStarted = false;
+
+	float asteroidsSpawnTime = GAME_ASTEROIDS_MAX_TIME_SPAWN;
+	float currAsteroidsSpawnTime = 0.0f;
+
+	bool CheckAllPlayersReady();
 
 	//////////////////////////////////////////////////////////////////////
 	// Client proxies
@@ -52,6 +66,7 @@ private:
 		GameObject *gameObject = nullptr;
 		double lastPacketReceivedTime = 0.0f;
 		float secondsSinceLastReplication = 0.0f;
+		bool readyToPlay = false;
 
 		uint32 lastInputSequenceNumberReceived = 0;
 		uint32 nextExpectedInputSequenceNumber = 0;
@@ -79,6 +94,9 @@ public:
 	GameObject * spawnPlayer(ClientProxy &clientProxy, uint8 spaceshipType);
 
 	GameObject * spawnBullet(GameObject *parent);
+
+	GameObject * spawnAsteroid();
+
 
 	// NOTE(jesus): Here go spawn methods for each type of network objects
 

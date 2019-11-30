@@ -17,14 +17,14 @@ struct Behaviour
 
 struct Spaceship : public Behaviour
 {
-	float horizontalLimit = 20.0f; 
+	float horizontalLimit = 40.0f; 
 	float verticalLimit = 500.0f;
 
 	void start() override
 	{
 		gameObject->tag = (uint32)(Random.next() * UINT_MAX);
 		gameObject->angle = 90.f;
-		gameObject->position.x =- 750.f;;
+		gameObject->position.x = 0;
 	}
 
 	void onInput(const InputController &input) override
@@ -106,3 +106,30 @@ struct Laser : public Behaviour
 		if (secondsSinceCreation > lifetimeSeconds) NetworkDestroy(gameObject);
 	}
 };
+
+struct Asteroid : public Behaviour
+{
+	float secondsSinceCreation = 0.0f;
+
+
+	float speed = 100.0f;
+	float rotSpeed = Random.randomFloat(-100.0f, 100.0f);
+
+	void update() override 
+	{
+		secondsSinceCreation *= Time.deltaTime;
+
+		if (isServer)
+			NetworkUpdate(gameObject);
+
+		gameObject->position.x -= speed * Time.deltaTime;
+
+		//rotation ?
+		gameObject->angle += rotSpeed * Time.deltaTime;
+
+
+		const float lifetimeSeconds = 5.0f;
+		if (secondsSinceCreation > lifetimeSeconds) NetworkDestroy(gameObject);
+	}
+};
+	
