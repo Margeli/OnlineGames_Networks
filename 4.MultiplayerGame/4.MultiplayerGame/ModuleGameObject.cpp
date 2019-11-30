@@ -46,11 +46,13 @@ bool ModuleGameObject::update()
 {
 	for (GameObject &gameObject : gameObjects)
 	{
-		if (gameObject.state == GameObject::UPDATING)
+		
+		if (gameObject.active && gameObject.state == GameObject::UPDATING)
 		{
 			if (gameObject.behaviour != nullptr)
 				gameObject.behaviour->update();
 		}
+		
 	}
 
 	return true;

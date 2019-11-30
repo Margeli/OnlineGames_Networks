@@ -114,13 +114,13 @@ bool ModuleCollision::update()
 	{
 		Collider &c1 = *activeColliders[i];
 
-		if (c1.type != ColliderType::None)
+		if (c1.type != ColliderType::None && c1.gameObject->active)
 		{
 			for (uint32 j = i + 1; j < activeCollidersCount; ++j)
 			{
 				Collider &c2 = *activeColliders[j];
 
-				if (c2.type != ColliderType::None)
+				if (c2.type != ColliderType::None&& c2.gameObject->active)
 				{
 					if ((c1.isTrigger && c1.gameObject->behaviour != nullptr) ||
 						(c2.isTrigger && c2.gameObject->behaviour != nullptr))

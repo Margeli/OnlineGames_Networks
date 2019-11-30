@@ -446,52 +446,53 @@ void ModuleRender::renderScene()
 	for (int i = 0; i < numObjects; ++i)
 	{
 		GameObject *gameObject = orderedGameObjects[i];
+		if (gameObject->active) {
+			// Setup matrices into our constant buffer
+			{
+				// Projection matrix
+				float L = 0.5f * -vp.Width;
+				float R = 0.5f *  vp.Width;
+				float T = 0.5f * -vp.Height;
+				float B = 0.5f *  vp.Height;
+				XMMATRIX ProjectionMatrix = ::XMMatrixOrthographicOffCenterRH(L, R, B, T, -1, 1);
 
-		// Setup matrices into our constant buffer
-		{
-			// Projection matrix
-			float L = 0.5f * -vp.Width;
-			float R = 0.5f *  vp.Width;
-			float T = 0.5f * -vp.Height;
-			float B = 0.5f *  vp.Height;
-			XMMATRIX ProjectionMatrix = ::XMMatrixOrthographicOffCenterRH(L, R, B, T, -1, 1);
+				// View matrix
+				XMMATRIX ViewMatrix = ::XMMatrixTranslation(-cameraPosition.x, -cameraPosition.y, 0.0f);
 
-			// View matrix
-			XMMATRIX ViewMatrix = ::XMMatrixTranslation(-cameraPosition.x, -cameraPosition.y, 0.0f);
+				// World matrix
+				vec2 textureSize = gameObject->texture ? gameObject->texture->size : vec2{ 100.0f, 100.0f };
+				vec2 size = vec2{
+					gameObject->size.x == 0.0f ? textureSize.x : gameObject->size.x,
+					gameObject->size.y == 0.0f ? textureSize.y : gameObject->size.y };
+				XMMATRIX WorldMatrix =
+					::XMMatrixTranslation(0.5f - gameObject->pivot.x,
+						0.5f - gameObject->pivot.y,
+						0.0f) *
+					::XMMatrixScaling(size.x, size.y, 1.0f) *
+					::XMMatrixRotationZ(::XMConvertToRadians(gameObject->angle)) *
+					::XMMatrixTranslation(gameObject->position.x, gameObject->position.y, 0.0f);
 
-			// World matrix
-			vec2 textureSize = gameObject->texture ? gameObject->texture->size : vec2{ 100.0f, 100.0f };
-			vec2 size = vec2{
-				gameObject->size.x == 0.0f ? textureSize.x : gameObject->size.x,
-				gameObject->size.y == 0.0f ? textureSize.y : gameObject->size.y };
-			XMMATRIX WorldMatrix =
-				::XMMatrixTranslation(0.5f - gameObject->pivot.x,
-					0.5f - gameObject->pivot.y,
-					0.0f) *
-				::XMMatrixScaling(size.x, size.y, 1.0f) *
-				::XMMatrixRotationZ(::XMConvertToRadians(gameObject->angle)) *
-				::XMMatrixTranslation(gameObject->position.x,gameObject->position.y, 0.0f);
-
-			// Copy matrices into the constant buffer
-			D3D11_MAPPED_SUBRESOURCE mapped_resource;
-			if (ctx->Map(g_pConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK) {
-				WLOG("d3d->Map() failed (CONSTANT BUFFER)");
-				return;
+				// Copy matrices into the constant buffer
+				D3D11_MAPPED_SUBRESOURCE mapped_resource;
+				if (ctx->Map(g_pConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK) {
+					WLOG("d3d->Map() failed (CONSTANT BUFFER)");
+					return;
+				}
+				CONSTANT_BUFFER* constant_buffer = (CONSTANT_BUFFER*)mapped_resource.pData;
+				memcpy(&constant_buffer->ProjectionMatrix, &ProjectionMatrix, sizeof(ProjectionMatrix));
+				memcpy(&constant_buffer->ViewMatrix, &ViewMatrix, sizeof(ViewMatrix));
+				memcpy(&constant_buffer->WorldMatrix, &WorldMatrix, sizeof(WorldMatrix));
+				memcpy(&constant_buffer->TintColor, gameObject->color.coords, sizeof(gameObject->color.coords));
+				ctx->Unmap(g_pConstantBuffer, 0);
 			}
-			CONSTANT_BUFFER* constant_buffer = (CONSTANT_BUFFER*)mapped_resource.pData;
-			memcpy(&constant_buffer->ProjectionMatrix, &ProjectionMatrix, sizeof(ProjectionMatrix));
-			memcpy(&constant_buffer->ViewMatrix, &ViewMatrix, sizeof(ViewMatrix));
-			memcpy(&constant_buffer->WorldMatrix, &WorldMatrix, sizeof(WorldMatrix));
-			memcpy(&constant_buffer->TintColor, gameObject->color.coords, sizeof(gameObject->color.coords));
-			ctx->Unmap(g_pConstantBuffer, 0);
+
+			// Pass texture to shader
+			Texture *texture = gameObject->texture ? gameObject->texture : whitePixel;
+			ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)texture->shaderResource;
+			ctx->PSSetShaderResources(0, 1, &texture_srv);
+
+			ctx->Draw(6, 0);
 		}
-
-		// Pass texture to shader
-		Texture *texture = gameObject->texture ? gameObject->texture : whitePixel;
-		ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)texture->shaderResource;
-		ctx->PSSetShaderResources(0, 1, &texture_srv);
-
-		ctx->Draw(6, 0);
 	}
 
 	// Render colliders
@@ -505,53 +506,54 @@ void ModuleRender::renderScene()
 			if (collider->type != ColliderType::None && collider->gameObject != nullptr)
 			{
 				GameObject *gameObject = collider->gameObject;
+				if (gameObject->collider) {
+					// Setup matrices into our constant buffer
+					{
+						// Projection matrix
+						float L = 0.5f * -vp.Width;
+						float R = 0.5f *  vp.Width;
+						float T = 0.5f * -vp.Height;
+						float B = 0.5f *  vp.Height;
+						XMMATRIX ProjectionMatrix = ::XMMatrixOrthographicOffCenterRH(L, R, B, T, -1, 1);
 
-				// Setup matrices into our constant buffer
-				{
-					// Projection matrix
-					float L = 0.5f * -vp.Width;
-					float R = 0.5f *  vp.Width;
-					float T = 0.5f * -vp.Height;
-					float B = 0.5f *  vp.Height;
-					XMMATRIX ProjectionMatrix = ::XMMatrixOrthographicOffCenterRH(L, R, B, T, -1, 1);
+						// View matrix
+						XMMATRIX ViewMatrix = ::XMMatrixTranslation(-cameraPosition.x, -cameraPosition.y, 0.0f);
 
-					// View matrix
-					XMMATRIX ViewMatrix = ::XMMatrixTranslation(-cameraPosition.x, -cameraPosition.y, 0.0f);
+						// World matrix
+						vec2 textureSize = gameObject->texture ? gameObject->texture->size : vec2{ 100.0f, 100.0f };
+						vec2 size = vec2{
+							gameObject->size.x == 0.0f ? textureSize.x : gameObject->size.x,
+							gameObject->size.y == 0.0f ? textureSize.y : gameObject->size.y };
+						XMMATRIX WorldMatrix =
+							::XMMatrixTranslation(0.5f - gameObject->pivot.x,
+								0.5f - gameObject->pivot.y,
+								0.0f) *
+							::XMMatrixScaling(size.x, size.y, 1.0f) *
+							::XMMatrixRotationZ(::XMConvertToRadians(gameObject->angle)) *
+							::XMMatrixTranslation(gameObject->position.x, gameObject->position.y, 0.0f);
 
-					// World matrix
-					vec2 textureSize = gameObject->texture ? gameObject->texture->size : vec2{ 100.0f, 100.0f };
-					vec2 size = vec2{
-						gameObject->size.x == 0.0f ? textureSize.x : gameObject->size.x,
-						gameObject->size.y == 0.0f ? textureSize.y : gameObject->size.y };
-					XMMATRIX WorldMatrix =
-						::XMMatrixTranslation(0.5f - gameObject->pivot.x,
-							0.5f - gameObject->pivot.y,
-							0.0f) *
-						::XMMatrixScaling(size.x, size.y, 1.0f) *
-						::XMMatrixRotationZ(::XMConvertToRadians(gameObject->angle)) *
-						::XMMatrixTranslation(gameObject->position.x, gameObject->position.y, 0.0f);
-
-					// Copy matrices into the constant buffer
-					D3D11_MAPPED_SUBRESOURCE mapped_resource;
-					if (ctx->Map(g_pConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK) {
-						WLOG("d3d->Map() failed (CONSTANT BUFFER)");
-						return;
+						// Copy matrices into the constant buffer
+						D3D11_MAPPED_SUBRESOURCE mapped_resource;
+						if (ctx->Map(g_pConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource) != S_OK) {
+							WLOG("d3d->Map() failed (CONSTANT BUFFER)");
+							return;
+						}
+						CONSTANT_BUFFER* constant_buffer = (CONSTANT_BUFFER*)mapped_resource.pData;
+						memcpy(&constant_buffer->ProjectionMatrix, &ProjectionMatrix, sizeof(ProjectionMatrix));
+						memcpy(&constant_buffer->ViewMatrix, &ViewMatrix, sizeof(ViewMatrix));
+						memcpy(&constant_buffer->WorldMatrix, &WorldMatrix, sizeof(WorldMatrix));
+						vec4 colliderColor = vec4{ 1.0f, 0.0f, 0.0f, 0.4f };
+						memcpy(&constant_buffer->TintColor, &colliderColor, sizeof(colliderColor));
+						ctx->Unmap(g_pConstantBuffer, 0);
 					}
-					CONSTANT_BUFFER* constant_buffer = (CONSTANT_BUFFER*)mapped_resource.pData;
-					memcpy(&constant_buffer->ProjectionMatrix, &ProjectionMatrix, sizeof(ProjectionMatrix));
-					memcpy(&constant_buffer->ViewMatrix, &ViewMatrix, sizeof(ViewMatrix));
-					memcpy(&constant_buffer->WorldMatrix, &WorldMatrix, sizeof(WorldMatrix));
-					vec4 colliderColor = vec4{ 1.0f, 0.0f, 0.0f, 0.4f };
-					memcpy(&constant_buffer->TintColor, &colliderColor, sizeof(colliderColor));
-					ctx->Unmap(g_pConstantBuffer, 0);
+
+					// Pass texture to shader
+					Texture *texture = whitePixel;
+					ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)texture->shaderResource;
+					ctx->PSSetShaderResources(0, 1, &texture_srv);
+
+					ctx->Draw(6, 0);
 				}
-
-				// Pass texture to shader
-				Texture *texture = whitePixel;
-				ID3D11ShaderResourceView* texture_srv = (ID3D11ShaderResourceView*)texture->shaderResource;
-				ctx->PSSetShaderResources(0, 1, &texture_srv);
-
-				ctx->Draw(6, 0);
 			}
 		}
 	}

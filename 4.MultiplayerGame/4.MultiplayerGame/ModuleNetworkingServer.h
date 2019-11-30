@@ -50,6 +50,7 @@ private:
 	float gameTimer = 0.0f;
 	float asteroidsSpawnTime = GAME_ASTEROIDS_MAX_TIME_SPAWN;
 	float currAsteroidsSpawnTime = 0.0f;
+	int currentPlayers = 0;
 
 	bool CheckAllPlayersReady();
 
@@ -69,6 +70,7 @@ private:
 		double lastPacketReceivedTime = 0.0f;
 		float secondsSinceLastReplication = 0.0f;
 		bool readyToPlay = false;
+		bool notifyDead= false;
 
 		uint32 lastInputSequenceNumberReceived = 0;
 		uint32 nextExpectedInputSequenceNumber = 0;
@@ -84,8 +86,11 @@ private:
 
 	ClientProxy * getClientProxy(const sockaddr_in &clientAddress);
 
-	void destroyClientProxy(ClientProxy * proxy);
 
+
+	void destroyClientProxy(ClientProxy * proxy);
+public:
+	ClientProxy * getClientProxyByGO(const GameObject* g);
 
 public:
 

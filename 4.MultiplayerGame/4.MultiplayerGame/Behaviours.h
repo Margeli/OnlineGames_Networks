@@ -19,6 +19,7 @@ struct Spaceship : public Behaviour
 {
 	float horizontalLimit = 40.0f; 
 	float verticalLimit = 500.0f;
+	bool dead = false;
 
 	void start() override
 	{
@@ -83,6 +84,14 @@ struct Spaceship : public Behaviour
 			// Be careful, if you do NetworkDestroy(gameObject) directly,
 			// the client proxy will poing to an invalid gameObject...
 			// instead, make the gameObject invisible or disconnect the client.
+		}
+		if (c2.type == ColliderType::Asteroid )
+		{
+			dead = true;
+			c1.gameObject->active = false;
+			App->modNetServer->getClientProxyByGO(c1.gameObject)->notifyDead=true;
+			NetworkDestroy(c1.gameObject);
+			
 		}
 	}
 

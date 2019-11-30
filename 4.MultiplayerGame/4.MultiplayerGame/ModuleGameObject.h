@@ -28,6 +28,8 @@ struct GameObject
 
 	// Tag for custom usage
 	uint32 tag = 0;
+
+	bool active = true;
 	
 private:
 

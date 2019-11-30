@@ -187,7 +187,8 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 						proxy->gamepad.horizontalAxis = inputData.horizontalAxis;
 						proxy->gamepad.verticalAxis = inputData.verticalAxis;
 						unpackInputControllerButtons(inputData.buttonBits, proxy->gamepad);
-						proxy->gameObject->behaviour->onInput(proxy->gamepad);
+						if(proxy->gameObject->state==GameObject::State::UPDATING && proxy->gameObject->active)
+							proxy->gameObject->behaviour->onInput(proxy->gamepad);
 						proxy->nextExpectedInputSequenceNumber = inputData.sequenceNumber + 1;
 						proxy->lastInputSequenceNumberReceived = inputData.sequenceNumber;
 					}
@@ -240,7 +241,7 @@ void ModuleNetworkingServer::onUpdate()
 				if (Time.time - clientProxy.lastPacketReceivedTime > DISCONNECT_TIMEOUT_SECONDS) {
 					ELOG("client connection timeout with the server.");
 					NetworkDestroy(clientProxy.gameObject);
-					destroyClientProxy(&clientProxy); //check??
+					destroyClientProxy(&clientProxy); 
 					
 					break;
 				}
@@ -373,16 +374,37 @@ void ModuleNetworkingServer::GameUpdate()
 		currAsteroidsSpawnTime = 0.0f;
 		spawnAsteroid();
 	}
+
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clientProxies[i].connected) {
+			//whent the spaceship of the player dies
+			if(clientProxies[i].notifyDead) {
+				OutputMemoryStream packet;
+				packet << ServerMessage::EndGame;
+				packet << gameTimer;
+				packet << currentPlayers;
+				currentPlayers--;
+				sendPacket(packet, clientProxies[i].address);
+
+				clientProxies[i].notifyDead = false;
+			}
+		}
+	}
+	if (currentPlayers == 0) {
+		//restart game
+	}
 }
 
 bool ModuleNetworkingServer::CheckAllPlayersReady()
 {
 	bool ret = false;
 	bool ready = true;
+	currentPlayers = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clientProxies[i].connected) {
 			ret = true;
 			ready &= clientProxies[i].readyToPlay;
+			currentPlayers++;
 		}
 	}
 	return ret & ready;
@@ -406,6 +428,18 @@ ModuleNetworkingServer::ClientProxy * ModuleNetworkingServer::getClientProxy(con
 		}
 	}
 
+	return nullptr;
+}
+
+ModuleNetworkingServer::ClientProxy * ModuleNetworkingServer::getClientProxyByGO(const GameObject * g)
+{
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if (clientProxies[i].gameObject == g)
+		{
+			return &clientProxies[i];
+		}
+	}
 	return nullptr;
 }
 

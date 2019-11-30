@@ -115,7 +115,19 @@ void ModuleNetworkingClient::onGui()
 		}
 	}
 	else {
-		ImGui::Text("Ready to play");
+		if (deadInGame) {
+			ImGui::Text("You last: %.1f s", deadTime);
+			if (positionInGame == 1) {
+				ImGui::Text("YOU WIN!");
+				ImGui::Text("WARNING! The server will restart in 5sec.");
+			}
+			else {
+				ImGui::Text("You lose, position #%i", positionInGame);
+			}
+		}
+		else {
+			ImGui::Text("Ready to play");
+		}
 	}
 	ImGui::End();
 }
@@ -162,6 +174,7 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			packet >> lastInputSequenceNum;
 
 			//game
+			
 			packet >> serverGameTime;
 
 			//replication sequence number
@@ -185,13 +198,16 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 						inputControllerFromInputPacketData(inputPacketData, inputForServer);
 						if(playerClientGameObject->behaviour)
 							playerClientGameObject->behaviour->onInput(inputForServer);
-						else {
-							int i = 101;
-						}
+						
 					}
 					lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
 				}
 			//////////////////////////////////////////-RECONCILIATION
+		}
+		if (message == ServerMessage::EndGame) {
+			deadInGame = true;
+			packet >> deadTime;
+			packet >> positionInGame;
 		}
 	}
 }

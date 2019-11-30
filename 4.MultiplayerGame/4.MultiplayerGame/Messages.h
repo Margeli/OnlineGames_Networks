@@ -14,5 +14,6 @@ enum class ServerMessage
 	Welcome = 4567,
 	Unwelcome,
 	Replication,
-	Ping
+	Ping, 
+	EndGame
 };
