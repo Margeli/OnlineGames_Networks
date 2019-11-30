@@ -42,10 +42,12 @@ private:
 	// Game 
 	//////////////////////////////////////////////////////////////////////
 
-	void InGameUpdate();
+	void GameStart();
+	void GameUpdate();
 
-	bool gameStarted = false;
+	bool runningGame = false;
 
+	float gameTimer = 0.0f;
 	float asteroidsSpawnTime = GAME_ASTEROIDS_MAX_TIME_SPAWN;
 	float currAsteroidsSpawnTime = 0.0f;
 

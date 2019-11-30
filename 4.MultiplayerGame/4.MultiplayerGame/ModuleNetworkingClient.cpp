@@ -104,16 +104,20 @@ void ModuleNetworkingClient::onGui()
 			ImGui::InputFloat("Delivery interval (s)", &inputDeliveryIntervalSeconds, 0.01f, 0.1f, 4);
 
 			ImGui::Separator();
-			if (!readyToPlay) {
-				if (ImGui::Button("Start Game", {  ImGui::GetWindowWidth(),20 })) {
-					sendReadyPacket = true;
-				}
-			}
-			else {
-				ImGui::Text("Ready to play");
-			}
+			
 		}
 	}
+	ImGui::Begin("GAME");
+	ImGui::Text("Time: %.1f", serverGameTime);
+	if (!readyToPlay) {
+		if (ImGui::Button("Start Game", { ImGui::GetWindowWidth(),20 })) {
+			sendReadyPacket = true;
+		}
+	}
+	else {
+		ImGui::Text("Ready to play");
+	}
+	ImGui::End();
 }
 
 void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, const sockaddr_in &fromAddress)
@@ -139,6 +143,11 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 		}
 		else if (message == ServerMessage::Unwelcome)
 		{
+			DisconnectionError error;
+			packet >> error;
+			if (error == DisconnectionError::gameRunning) {
+				WLOG("Game already running. Wait until it finishes");
+			}
 			WLOG("ModuleNetworkingClient::onPacketReceived() - Unwelcome from server :-(");
 			disconnect();
 		}
@@ -151,6 +160,9 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 			//replication message containing the input sequence number
 			uint32 lastInputSequenceNum=0;
 			packet >> lastInputSequenceNum;
+
+			//game
+			packet >> serverGameTime;
 
 			//replication sequence number
 			if (deliveryManagerClient.processSequenceNumber(packet)) {
@@ -171,7 +183,11 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 					{
 						InputPacketData &inputPacketData = inputData[i % ArrayCount(inputData)];
 						inputControllerFromInputPacketData(inputPacketData, inputForServer);
-						playerClientGameObject->behaviour->onInput(inputForServer);
+						if(playerClientGameObject->behaviour)
+							playerClientGameObject->behaviour->onInput(inputForServer);
+						else {
+							int i = 101;
+						}
 					}
 					lastInputSequenceNumberReceivedByServer = lastInputSequenceNum;
 				}
@@ -221,7 +237,7 @@ void ModuleNetworkingClient::onUpdate()
 
 		//////////////////////////////////////////CLIENT PREDICTION
 			GameObject *playerClientGameObject = App->modLinkingContext->getNetworkGameObject(networkId);
-			if (playerClientGameObject != nullptr)
+			if (playerClientGameObject != nullptr&& playerClientGameObject->behaviour!=nullptr)
 			{
 				playerClientGameObject->behaviour->onInput(Input);
 			}

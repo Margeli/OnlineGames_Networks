@@ -103,7 +103,7 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 		{
 			bool newClient = false;
 
-			if (proxy == nullptr)
+			if (proxy == nullptr && !runningGame)
 			{
 				proxy = createClientProxy();
 
@@ -153,9 +153,16 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 				// Send welcome to the new player
 				OutputMemoryStream unwelcomePacket;
 				unwelcomePacket << ServerMessage::Unwelcome;
+				if (runningGame) {
+					unwelcomePacket << DisconnectionError::gameRunning;
+				}
+				else {
+					unwelcomePacket << DisconnectionError::network;
+				}
+				
 				sendPacket(unwelcomePacket, fromAddress);
 
-				WLOG("Message received: UNWELCOMED hello - from player %s", proxy->name.c_str());
+				WLOG("Message received: UNWELCOMED hello.");
 			}
 		}
 		else if (message == ClientMessage::Input)
@@ -209,11 +216,12 @@ void ModuleNetworkingServer::onUpdate()
 	if (state == ServerState::Listening)
 	{
 
-		//if(!gameStarted&& CheckAllPlayersReady())
-		//REMOVE
-		gameStarted = true;
-		if (gameStarted) {
-			//InGameUpdate();
+		if (!runningGame && CheckAllPlayersReady()) {
+			runningGame = true;
+			GameStart();
+		}
+		if (runningGame) {
+			GameUpdate();
 		}
 
 		bool sendPing = false;
@@ -263,6 +271,10 @@ void ModuleNetworkingServer::onUpdate()
 						//replication message containing the input sequence number
 						uint32 num = clientProxy.lastInputSequenceNumberReceived;
 						RepPacket << num;
+
+						//game
+						RepPacket << gameTimer;
+
 
 						//writing the replication sequence number
 						
@@ -348,9 +360,14 @@ void ModuleNetworkingServer::onDisconnect()
 //////////////////////////////////////////////////////////////////////
 // Game logic
 //////////////////////////////////////////////////////////////////////
+void ModuleNetworkingServer::GameStart() {
 
-void ModuleNetworkingServer::InGameUpdate()
+	
+}
+void ModuleNetworkingServer::GameUpdate()
 {
+	gameTimer += Time.deltaTime;
+
 	currAsteroidsSpawnTime += Time.deltaTime;
 	if (currAsteroidsSpawnTime > asteroidsSpawnTime) {
 		currAsteroidsSpawnTime = 0.0f;
@@ -364,6 +381,7 @@ bool ModuleNetworkingServer::CheckAllPlayersReady()
 	bool ready = true;
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clientProxies[i].connected) {
+			ret = true;
 			ready &= clientProxies[i].readyToPlay;
 		}
 	}

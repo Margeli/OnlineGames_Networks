@@ -69,7 +69,7 @@ private:
 public:
 	bool readyToPlay = false;
 	bool sendReadyPacket = false;
-
+	float serverGameTime = 0.0f;
 
 	// Input ///////////
 private:

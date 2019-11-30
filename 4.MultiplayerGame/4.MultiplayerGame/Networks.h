@@ -82,7 +82,11 @@ enum class ColliderType
 	Laser, 
 	Asteroid
 };
-
+enum class DisconnectionError 
+{
+	network,
+	gameRunning
+ };
 
 ////////////////////////////////////////////////////////////////////////
 // WINDOW

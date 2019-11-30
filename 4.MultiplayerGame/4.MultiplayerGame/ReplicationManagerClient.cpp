@@ -5,6 +5,7 @@ void ReplicationManagerClient::read(const InputMemoryStream & packet, uint32 cli
 {
 	uint32 networkID;
 	while (packet.RemainingByteCount() > 0) {
+		
 		packet >> networkID;
 		int actionId = 0;
 		packet >> actionId;
