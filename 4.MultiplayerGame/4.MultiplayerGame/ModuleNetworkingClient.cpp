@@ -119,7 +119,7 @@ void ModuleNetworkingClient::onGui()
 			ImGui::Text("You last: %.1f s", deadTime);
 			if (positionInGame == 1) {
 				ImGui::Text("YOU WIN!");
-				ImGui::Text("WARNING! The server will restart in 5sec.");
+				ImGui::Text("WARNING! The server will restart in %i sec.", GAME_END_RESTART_SERVER_TIME);
 			}
 			else {
 				ImGui::Text("You lose, position #%i", positionInGame);
@@ -204,10 +204,13 @@ void ModuleNetworkingClient::onPacketReceived(const InputMemoryStream &packet, c
 				}
 			//////////////////////////////////////////-RECONCILIATION
 		}
-		if (message == ServerMessage::EndGame) {
+		if (message == ServerMessage::PlayerDead) {
 			deadInGame = true;
 			packet >> deadTime;
 			packet >> positionInGame;
+		}
+		if (message == ServerMessage::EndGame) {
+			RestartClientGame();
 		}
 	}
 }
@@ -357,6 +360,20 @@ void ModuleNetworkingClient::sendPing()
 	pingPacket << ClientMessage::Ping;
 	sendPacket(pingPacket, serverAddress);
 	secondsSinceLastPing = 0.0f;
+}
+
+void ModuleNetworkingClient::RestartClientGame()
+{
+	readyToPlay = false;
+	sendReadyPacket = false;
+	deadInGame = false;
+	serverGameTime = 0.0f;
+	deadTime = 0.0f;
+	positionInGame = 0;
+	//state = ClientState::Start;
+	deliveryManagerClient.restart();
+	
+	disconnect();
 }
 
 void ModuleNetworkingClient::sendHelloPacket()

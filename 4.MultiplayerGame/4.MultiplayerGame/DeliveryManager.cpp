@@ -101,10 +101,17 @@ void DeliveryManager::clear()
 	expectedSequenceNumber = 0;
 }
 
+void DeliveryManager::restart()
+{
+	nextSequenceNumber = 0;
+	expectedSequenceNumber = 0;
+}
+
 
 
 void Delivery::CleanUp()
 {
+	
 	if (delegate) {
 		delete delegate;
 		delegate = nullptr;

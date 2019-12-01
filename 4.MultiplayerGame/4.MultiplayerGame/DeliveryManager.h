@@ -39,6 +39,8 @@ public:
 
 	void clear();
 
+	void restart();
+
 	int countPendingDeliveries()const { return pendingDeliveries.size(); }
 
 private:
