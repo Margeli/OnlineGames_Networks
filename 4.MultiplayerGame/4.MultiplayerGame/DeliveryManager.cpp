@@ -48,23 +48,25 @@ void DeliveryManager::processAckdSequenceNumbers(const InputMemoryStream & packe
 		uint32 seqNumber = 0;
 		packet >> seqNumber;
 		bool deliveryFound = false;
-		for(auto it = pendingDeliveries.begin(); it!=pendingDeliveries.end(); it++)
-		{
-			if ((*it).sequenceNumber == seqNumber) {
-				if ((*it).delegate) {//not null
-					(*it).delegate->onDeliverySuccess(this);
-				}
-				(*it).CleanUp();
-				pendingDeliveries.erase(it);
-				deliveryFound = true;
-				break;
-			}			
-		}
-		if (!deliveryFound) {
 		
-			//error: sequence number to acknowledge is missing!
-			int i = 101;
-		}
+			for (auto it = pendingDeliveries.begin(); it != pendingDeliveries.end(); it++)
+			{
+				if ((*it).sequenceNumber == seqNumber) {
+					if ((*it).delegate) {//not null
+						(*it).delegate->onDeliverySuccess(this);
+					}
+					(*it).CleanUp();
+					pendingDeliveries.erase(it);
+					deliveryFound = true;
+					break;
+				}
+			}
+			if (!deliveryFound) {
+
+				//error: sequence number to acknowledge is missing!
+				int i = 101;
+			}
+		
 	}
 }
 
@@ -101,10 +103,17 @@ void DeliveryManager::clear()
 	expectedSequenceNumber = 0;
 }
 
+void DeliveryManager::restart()
+{
+	nextSequenceNumber = 0;
+	expectedSequenceNumber = 0;
+}
+
 
 
 void Delivery::CleanUp()
 {
+	
 	if (delegate) {
 		delete delegate;
 		delegate = nullptr;

@@ -39,6 +39,9 @@ private:
 	void onDisconnect() override;
 
 	void sendPing();
+	
+
+	void RestartClientGame();
 
 	//////////////////////////////////////////////////////////////////////
 	// Client state

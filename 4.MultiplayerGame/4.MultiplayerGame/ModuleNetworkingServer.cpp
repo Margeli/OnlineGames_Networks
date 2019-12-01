@@ -197,7 +197,7 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 		}
 
 		else if (message == ClientMessage::ReplicationAck) {			
-
+			if(proxy)
 			proxy->deliveryManagerServer.processAckdSequenceNumbers(packet);
 		}
 		else if (message == ClientMessage::ReadyToPlay) {
@@ -222,9 +222,18 @@ void ModuleNetworkingServer::onUpdate()
 			GameStart();
 		}
 		if (runningGame) {
-			GameUpdate();
+			if (endGame == false) {
+				GameUpdate();
+			}
+			else{
+				endGameTime += Time.deltaTime;
+				if (endGameTime > GAME_END_RESTART_SERVER_TIME) {
+					GameEnd();
+					endGameTime = 0.0f;
+				}
+			}
 		}
-
+		
 		bool sendPing = false;
 		secondsSinceLastPing += Time.deltaTime;
 		if (secondsSinceLastPing > PING_INTERVAL_SECONDS) {
@@ -349,6 +358,7 @@ void ModuleNetworkingServer::onDisconnect()
 	// Clear all client proxies
 	for (ClientProxy &clientProxy : clientProxies)
 	{
+		clientProxy.deliveryManagerServer.clear();
 		destroyClientProxy(&clientProxy);
 	}
 	
@@ -380,7 +390,7 @@ void ModuleNetworkingServer::GameUpdate()
 			//whent the spaceship of the player dies
 			if(clientProxies[i].notifyDead) {
 				OutputMemoryStream packet;
-				packet << ServerMessage::EndGame;
+				packet << ServerMessage::PlayerDead;
 				packet << gameTimer;
 				packet << currentPlayers;
 				currentPlayers--;
@@ -391,9 +401,34 @@ void ModuleNetworkingServer::GameUpdate()
 		}
 	}
 	if (currentPlayers == 0) {
-		//restart game
+		endGame = true;
 	}
 }
+
+void ModuleNetworkingServer::GameEnd()
+{
+	runningGame = false;
+	endGame = false;
+	gameTimer = 0.0f;
+	currAsteroidsSpawnTime = 0.0f;
+
+	OutputMemoryStream packet;
+	packet << ServerMessage::EndGame;
+
+
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clientProxies[i].connected) {
+			
+			sendPacket(packet, clientProxies[i].address);
+			clientProxies[i].gameObject->active = true;
+		}
+	}
+	onDisconnect();
+	
+	state = ServerState::Listening;
+}
+
+
 
 bool ModuleNetworkingServer::CheckAllPlayersReady()
 {
@@ -567,7 +602,7 @@ GameObject * ModuleNetworkingServer::spawnAsteroid()
 
 	//every GAME_ASTEROIDS_DIFFICULTY_RATIO seconds (20s) the new asteroids speed is doubled
 	Asteroid* beh = (Asteroid*)g->behaviour;
-	beh->speed = Random.randomFloat(75, 125) * Time.time / GAME_ASTEROIDS_DIFFICULTY_RATIO ;
+	beh->speed = Random.randomFloat(75, 125) * gameTimer / GAME_ASTEROIDS_DIFFICULTY_RATIO ;
 
 
 	App->modLinkingContext->registerNetworkGameObject(g);

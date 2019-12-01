@@ -15,5 +15,6 @@ enum class ServerMessage
 	Unwelcome,
 	Replication,
 	Ping, 
+	PlayerDead,
 	EndGame
 };
