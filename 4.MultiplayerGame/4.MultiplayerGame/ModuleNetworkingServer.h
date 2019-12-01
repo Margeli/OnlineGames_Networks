@@ -3,7 +3,7 @@
 #include "ModuleNetworking.h"
 
 #define GAME_ASTEROIDS_MAX_TIME_SPAWN 3.0f
-#define GAME_ASTEROIDS_DIFFICULTY_RATIO 20
+#define GAME_ASTEROIDS_DIFFICULTY_RATIO 10
 #define GAME_END_RESTART_SERVER_TIME 5.0f
 
 class ModuleNetworkingServer : public ModuleNetworking

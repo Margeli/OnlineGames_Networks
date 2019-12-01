@@ -197,7 +197,7 @@ void ModuleNetworkingServer::onPacketReceived(const InputMemoryStream &packet, c
 		}
 
 		else if (message == ClientMessage::ReplicationAck) {			
-
+			if(proxy)
 			proxy->deliveryManagerServer.processAckdSequenceNumbers(packet);
 		}
 		else if (message == ClientMessage::ReadyToPlay) {
@@ -358,6 +358,7 @@ void ModuleNetworkingServer::onDisconnect()
 	// Clear all client proxies
 	for (ClientProxy &clientProxy : clientProxies)
 	{
+		clientProxy.deliveryManagerServer.clear();
 		destroyClientProxy(&clientProxy);
 	}
 	
@@ -413,13 +414,17 @@ void ModuleNetworkingServer::GameEnd()
 
 	OutputMemoryStream packet;
 	packet << ServerMessage::EndGame;
+
+
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		if (clientProxies[i].connected) {
+			
 			sendPacket(packet, clientProxies[i].address);
 			clientProxies[i].gameObject->active = true;
 		}
 	}
 	onDisconnect();
+	
 	state = ServerState::Listening;
 }
 
@@ -597,7 +602,7 @@ GameObject * ModuleNetworkingServer::spawnAsteroid()
 
 	//every GAME_ASTEROIDS_DIFFICULTY_RATIO seconds (20s) the new asteroids speed is doubled
 	Asteroid* beh = (Asteroid*)g->behaviour;
-	beh->speed = Random.randomFloat(75, 125) * Time.time / GAME_ASTEROIDS_DIFFICULTY_RATIO ;
+	beh->speed = Random.randomFloat(75, 125) * gameTimer / GAME_ASTEROIDS_DIFFICULTY_RATIO ;
 
 
 	App->modLinkingContext->registerNetworkGameObject(g);

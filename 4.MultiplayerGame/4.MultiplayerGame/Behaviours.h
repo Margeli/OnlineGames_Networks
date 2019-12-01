@@ -126,7 +126,7 @@ struct Asteroid : public Behaviour
 
 	void update() override 
 	{
-		secondsSinceCreation *= Time.deltaTime;
+		secondsSinceCreation += Time.deltaTime;
 
 		if (isServer)
 			NetworkUpdate(gameObject);
@@ -137,8 +137,9 @@ struct Asteroid : public Behaviour
 		gameObject->angle += rotSpeed * Time.deltaTime;
 
 
-		const float lifetimeSeconds = 5.0f;
-		if (secondsSinceCreation > lifetimeSeconds) NetworkDestroy(gameObject);
+		const float lifetimeSeconds = 20.0f;
+		if (secondsSinceCreation > lifetimeSeconds)
+			NetworkDestroy(gameObject);
 	}
 };
 	
