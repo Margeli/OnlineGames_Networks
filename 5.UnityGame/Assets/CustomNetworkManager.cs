@@ -57,6 +57,21 @@ public class CustomNetworkManager : NetworkManager
                 3);
         }
     }
+
+    public void ChangePlayerPrefab(PlayerController currentPlayer, int prefabIndex)
+    {
+        //instantiate a new GameObject where the previous one was
+        GameObject newPlayer = Instantiate(spawnPrefabs[prefabIndex], currentPlayer.gameObject.transform.position,
+            currentPlayer.gameObject.transform.rotation);
+        //Destroy the previous player GameObject
+        NetworkServer.Destroy(currentPlayer.gameObject);
+
+        //replace the connected player GameObject
+
+        NetworkServer.ReplacePlayerForConnection(currentPlayer.connectionToClient, newPlayer, 0);
+
+    }
+
 }
 
 public class MsgTypes
