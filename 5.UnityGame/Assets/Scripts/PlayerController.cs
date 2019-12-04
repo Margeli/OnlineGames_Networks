@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.Networking;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -9,47 +9,54 @@ public class PlayerController : NetworkBehaviour
     private Camera mainCamera;
     private TextMesh nameLabel;
 
+    CustomNetworkManager networkManager;
+
     const float RUNNING_SPEED = 10.0f;
     const float ROTATION_SPEED = 180.0f;
 
-    CustomNetworkManager networkManager;
-
     // Name sync /////////////////////////////////////
-
-        [SyncVar(hook = "SyncNameChanged")]
+    [SyncVar(hook = "SyncNameChanged")]    
     public string playerName = "Player";
 
     [Command]
     void CmdChangeName(string name) { playerName = name; }
 
-    void SyncNameChanged(string name) { nameLabel.text = name; } // the hook of the playerName var
+    void SyncNameChanged(string name){nameLabel.text = name; }
 
 
-    // Index player Sync //////////////////////////////
-
+    // Player Prefab sync /////////////////////////////////////
+    
     [Command]
+    void CmdChangePlayerPrefab(int prefabIndex) { networkManager.ChangePlayerPrefab(this, prefabIndex); }
 
-    void CmdChangePlayerPrefab(int prefabIndex)
-    {
-        networkManager.ChangePlayerPrefab(this, prefabIndex);
-    }
 
-   
     // OnGUI /////////////////////////////////////////
 
     private void OnGUI()
     {
+        GUILayout.BeginArea(new Rect(Screen.width - 260, 10, 250, Screen.height - 20));
+
+        string prevPlayerName = playerName;
+        playerName = GUILayout.TextField(playerName);
+        if (playerName != prevPlayerName)
+        {
+            if (nameLabel != null)
+            {
+                nameLabel.text = playerName;
+            }
+        }
+
+        GUILayout.EndArea();
+
         if (isLocalPlayer)
         {
-            GUILayout.BeginArea(new Rect(Screen.width - 260, 10, 250, Screen.height - 20));
-
-            string prevPlayerName = playerName;
+            GUILayout.BeginArea(new Rect(Screen.width - 260, 10, 210, Screen.height - 20));
+            string prevName = playerName;
             playerName = GUILayout.TextField(playerName);
-            if (playerName != prevPlayerName)
+            if (playerName != prevName)
             {
                 CmdChangeName(playerName);
             }
-
             GUILayout.EndArea();
 
             short newIndex = (short)GUILayout.SelectionGrid(
@@ -58,33 +65,21 @@ public class PlayerController : NetworkBehaviour
             {
                 networkManager.playerPrefabIndex = newIndex;
                 CmdChangePlayerPrefab(newIndex);
-                
             }
-                
         }
     }
 
 
     // Animation sync ////////////////////////////////
-    
-        [SyncVar(hook ="OnSetAnimation")]
+
+    [SyncVar(hook = "OnSetAnimation")]
     string animationName;
 
-    void setAnimation(string animName)
-    {
-        OnSetAnimation(animName);
-        CmdSetAnimation(animName);
-    }
-
     [Command]
-    void CmdSetAnimation(string name)
-    {
-
-        animationName = name;
-    }
-
-    void OnSetAnimation(string animName)
-    {
+    void CmdSetAnimation(string name){ animationName = name; }
+        
+    
+    void OnSetAnimation(string animName){
         if (animationName == animName) return;
         animationName = animName;
 
@@ -99,6 +94,12 @@ public class PlayerController : NetworkBehaviour
         else if (animationName == "Running backwards") animator.SetBool("Running backwards", true);
         else if (animationName == "Jumping") animator.SetTrigger("Jumping");
         else if (animationName == "Kicking") animator.SetTrigger("Kicking");
+    }
+
+    void setAnimation(string animName)
+    {
+        OnSetAnimation(animName);
+        CmdSetAnimation(animName);
     }
 
 

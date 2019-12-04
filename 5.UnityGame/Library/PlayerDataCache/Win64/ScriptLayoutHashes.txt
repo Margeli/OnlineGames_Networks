@@ -1,6 +1,6 @@
 Win64
 PlayerPath?
-C:/Users/carlesma/Documents/GitHub/OnlineGames_Networks/5.UnityGame/Builds/Net Test 3.exe
+C:/Users/marge/Documents/GitHub/OnlineGames_Networks/5.UnityGame/Build/Net Test 3.exe
 SceneListBegin?
 Assets/Scenes/MainScene.unity
 SceneListEnd?

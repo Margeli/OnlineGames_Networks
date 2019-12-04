@@ -737,8 +737,8 @@ GameObject:
   - component: {fileID: 114029475292918006}
   - component: {fileID: 136295647957876148}
   - component: {fileID: 54117198443084652}
-  - component: {fileID: 114527349182518744}
-  - component: {fileID: 114766736475588976}
+  - component: {fileID: 114945307432908404}
+  - component: {fileID: 114926265103593708}
   m_Layer: 0
   m_Name: BoyPrefab
   m_TagString: Untagged
@@ -824,7 +824,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &114527349182518744
+--- !u!114 &114945307432908404
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -857,7 +857,7 @@ MonoBehaviour:
     i15: 0
   m_ServerOnly: 0
   m_LocalPlayerAuthority: 1
---- !u!114 &114766736475588976
+--- !u!114 &114926265103593708
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -44,8 +44,8 @@ GameObject:
   - component: {fileID: 114494872418090290}
   - component: {fileID: 136784360673598342}
   - component: {fileID: 54065973262404520}
-  - component: {fileID: 114638330360259252}
-  - component: {fileID: 114099633663146022}
+  - component: {fileID: 114114373699049276}
+  - component: {fileID: 114892849194564772}
   m_Layer: 0
   m_Name: RobotPrefab
   m_TagString: Untagged
@@ -102,7 +102,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e850fb8a9035b1b4ca68b5b4f82e0767, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerName: Player
 --- !u!136 &136784360673598342
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -133,7 +132,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &114638330360259252
+--- !u!114 &114114373699049276
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -166,7 +165,7 @@ MonoBehaviour:
     i15: 0
   m_ServerOnly: 0
   m_LocalPlayerAuthority: 1
---- !u!114 &114099633663146022
+--- !u!114 &114892849194564772
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
